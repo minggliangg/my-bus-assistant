@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import type { BusStopDTO } from "../features/bus-stop/dtos/bus-arrival";
+import type { BusStopDTO } from "../features/bus-arrivals/dtos/bus-arrival";
 
 // Mock API response for bus arrivals
 export const mockBusArrivalResponse: BusStopDTO = {
@@ -78,7 +78,10 @@ export const mockBusArrivalResponse: BusStopDTO = {
 };
 
 // Create a mock response generator that sets the BusStopCode dynamically
-function createMockResponse(busStopCode: string, services: BusStopDTO["Services"]): BusStopDTO {
+function createMockResponse(
+  busStopCode: string,
+  services: BusStopDTO["Services"],
+): BusStopDTO {
   return {
     BusStopCode: busStopCode,
     Services: services,
@@ -201,7 +204,10 @@ export const handlers = [
     const busStopCode = url.searchParams.get("BusStopCode");
 
     if (!busStopCode) {
-      return HttpResponse.json({ error: "BusStopCode is required" }, { status: 400 });
+      return HttpResponse.json(
+        { error: "BusStopCode is required" },
+        { status: 400 },
+      );
     }
 
     // Return different responses based on bus stop code
@@ -224,7 +230,10 @@ export const handlers = [
       return HttpResponse.json({ error: "Server error" }, { status: 500 });
     }
 
-    return HttpResponse.json({ error: "Unknown bus stop code" }, { status: 404 });
+    return HttpResponse.json(
+      { error: "Unknown bus stop code" },
+      { status: 404 },
+    );
   }),
 
   // Network error handler

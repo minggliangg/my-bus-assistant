@@ -1,11 +1,7 @@
-import {
-  formatArrivalTime,
-  type BusService,
-  type BusStop,
-} from "@/features/bus-arrivals";
-import type { BusStopDTO } from "@/features/bus-arrivals/dtos/bus-arrival";
-import { mapBusStopDtoToModel } from "@/features/bus-arrivals/mappers/bus-stop-mapper";
 import { create } from "zustand";
+import { type BusStopDTO } from "../dtos/bus-arrival";
+import { mapBusStopDtoToModel } from "../mappers/bus-stop-mapper";
+import { type BusStop, formatArrivalTime, type BusService } from "../models/bus-stop-models";
 
 interface ChangedField {
   serviceNo: string;
@@ -30,39 +26,26 @@ interface BusStopStore {
 
 const useBusStore = create<BusStopStore>((set, get) => {
   // Helper to compare bus arrivals and detect changes
-  const compareBusArrivals = (
-    oldServices: BusService[],
-    newServices: BusService[],
-  ): ChangedField[] => {
+  const compareBusArrivals = (oldServices: BusService[], newServices: BusService[]): ChangedField[] => {
     const changes: ChangedField[] = [];
     const now = Date.now();
 
     for (const newService of newServices) {
-      const oldService = oldServices.find(
-        (s) => s.serviceNo === newService.serviceNo,
-      );
+      const oldService = oldServices.find(s => s.serviceNo === newService.serviceNo);
 
       if (!oldService) {
         // New service appeared - mark all buses as changed
         changes.push(
           { serviceNo: newService.serviceNo, busIndex: 0, changedAt: now },
           { serviceNo: newService.serviceNo, busIndex: 1, changedAt: now },
-          { serviceNo: newService.serviceNo, busIndex: 2, changedAt: now },
+          { serviceNo: newService.serviceNo, busIndex: 2, changedAt: now }
         );
         continue;
       }
 
       // Compare each bus arrival
-      const oldBuses = [
-        oldService.nextBus,
-        oldService.nextBus2,
-        oldService.nextBus3,
-      ];
-      const newBuses = [
-        newService.nextBus,
-        newService.nextBus2,
-        newService.nextBus3,
-      ];
+      const oldBuses = [oldService.nextBus, oldService.nextBus2, oldService.nextBus3];
+      const newBuses = [newService.nextBus, newService.nextBus2, newService.nextBus3];
 
       for (let i = 0; i < 3; i++) {
         const oldTime = oldBuses[i] ? formatArrivalTime(oldBuses[i]!) : null;
@@ -72,7 +55,7 @@ const useBusStore = create<BusStopStore>((set, get) => {
           changes.push({
             serviceNo: newService.serviceNo,
             busIndex: i as 0 | 1 | 2,
-            changedAt: now,
+            changedAt: now
           });
         }
       }
@@ -85,7 +68,7 @@ const useBusStore = create<BusStopStore>((set, get) => {
   const cleanupOldChanges = (changedFields: ChangedField[]): ChangedField[] => {
     const now = Date.now();
     const MAX_AGE_MS = 3000; // 3 seconds
-    return changedFields.filter((field) => now - field.changedAt < MAX_AGE_MS);
+    return changedFields.filter(field => now - field.changedAt < MAX_AGE_MS);
   };
 
   return {
@@ -99,10 +82,7 @@ const useBusStore = create<BusStopStore>((set, get) => {
     changedFields: [],
 
     fetchBusArrivals: async (busStopCode: string) => {
-      const THROTTLE_INTERVAL_MS = parseInt(
-        import.meta.env.VITE_THROTTLE_INTERVAL_MS || "45000",
-        10,
-      ); // Throttle interval from env var (default: 45s)
+      const THROTTLE_INTERVAL_MS = parseInt(import.meta.env.VITE_THROTTLE_INTERVAL_MS || "45000", 10); // Throttle interval from env var (default: 45s)
       const storageKey = `bus-stop-last-update-${busStopCode}`;
       const now = Date.now();
 
@@ -135,12 +115,7 @@ const useBusStore = create<BusStopStore>((set, get) => {
       }
 
       // Set fetching state and attempt timestamp
-      set({
-        loading: true,
-        error: null,
-        isFetching: true,
-        lastAttemptTimestamp: now,
-      });
+      set({ loading: true, error: null, isFetching: true, lastAttemptTimestamp: now });
 
       try {
         const response = await fetch(
@@ -167,8 +142,7 @@ const useBusStore = create<BusStopStore>((set, get) => {
 
         // Cleanup old changes before adding new ones
         const existingChanges = currentState.changedFields;
-        const updatedChanges =
-          cleanupOldChanges(existingChanges).concat(changedFields);
+        const updatedChanges = cleanupOldChanges(existingChanges).concat(changedFields);
 
         // Update timestamp after successful fetch
         try {
