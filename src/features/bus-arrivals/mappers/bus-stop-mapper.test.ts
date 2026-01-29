@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
-import type { BusStopDTO } from "../dtos/bus-arrival";
-import type { BusArrival, BusService } from "../models/bus-stop-models";
+import type { BusStopDTO } from "../dtos/bus-arrival-dto";
+import { EMPTY_BUS_DTO } from "../dtos/bus-arrival-dto";
+import type { BusArrival, BusService } from "../models/bus-arrivals-model";
 import { mapBusStopDtoToModel } from "./bus-stop-mapper";
 
 describe("mapBusStopDtoToModel", () => {
@@ -55,11 +56,12 @@ describe("mapBusStopDtoToModel", () => {
     expect(nextBus.estimatedArrival).toBeInstanceOf(Date);
   });
 
-  test("handles missing optional fields", () => {
+  test("handles service with only one upcoming bus", () => {
     const serviceDTO = createMockServiceDTO({
-      NextBus: undefined,
-      NextBus2: undefined,
-      NextBus3: undefined,
+      ServiceNo: "15",
+      NextBus: createMockBusDTO(),
+      NextBus2: EMPTY_BUS_DTO,
+      NextBus3: EMPTY_BUS_DTO,
     });
     const dto: BusStopDTO = {
       BusStopCode: "83139",
@@ -71,33 +73,22 @@ describe("mapBusStopDtoToModel", () => {
     const service = result.services[0] as BusService;
     expect(service.serviceNo).toBe("15");
     expect(service.operator).toBe("SBST");
-    expect(service.nextBus).toBeNull();
+    expect(service.nextBus).not.toBeNull();
     expect(service.nextBus2).toBeNull();
     expect(service.nextBus3).toBeNull();
   });
 
-  test("handles empty services array", () => {
+  test("handles empty services array (no buses scenario)", () => {
     const dto: BusStopDTO = {
-      BusStopCode: "83139",
+      BusStopCode: "98291",
       Services: [],
     };
 
     const result = mapBusStopDtoToModel(dto);
 
-    expect(result.busStopCode).toBe("83139");
+    expect(result.busStopCode).toBe("98291");
     expect(result.services).toHaveLength(0);
-  });
-
-  test("handles undefined Services array", () => {
-    const dto: BusStopDTO = {
-      BusStopCode: "83139",
-      Services: undefined,
-    };
-
-    const result = mapBusStopDtoToModel(dto);
-
-    expect(result.busStopCode).toBe("83139");
-    expect(result.services).toHaveLength(0);
+    expect(result.services).toEqual([]);
   });
 
   test("converts date strings to Date objects", () => {
@@ -117,7 +108,7 @@ describe("mapBusStopDtoToModel", () => {
     expect(nextBus.estimatedArrival.toISOString()).toBe(testDate);
   });
 
-  test("handles bus with null EstimatedArrival", () => {
+  test("handles bus with empty EstimatedArrival", () => {
     const busDTO = createMockBusDTO({ EstimatedArrival: "" });
     const serviceDTO = createMockServiceDTO({ NextBus: busDTO });
     const dto: BusStopDTO = {
@@ -131,9 +122,13 @@ describe("mapBusStopDtoToModel", () => {
     expect(service.nextBus).toBeNull();
   });
 
-  test("handles bus with undefined EstimatedArrival", () => {
-    const busDTO = { ...createMockBusDTO(), EstimatedArrival: undefined };
-    const serviceDTO = createMockServiceDTO({ NextBus: busDTO });
+  test("handles service with two upcoming buses", () => {
+    const serviceDTO = createMockServiceDTO({
+      ServiceNo: "66",
+      NextBus: createMockBusDTO(),
+      NextBus2: createMockBusDTO({ EstimatedArrival: new Date(Date.now() + 10 * 60000).toISOString() }),
+      NextBus3: EMPTY_BUS_DTO,
+    });
     const dto: BusStopDTO = {
       BusStopCode: "83139",
       Services: [serviceDTO],
@@ -142,20 +137,10 @@ describe("mapBusStopDtoToModel", () => {
     const result = mapBusStopDtoToModel(dto);
     const service = result.services[0] as BusService;
 
-    expect(service.nextBus).toBeNull();
-  });
-
-  test("handles null bus DTO", () => {
-    const serviceDTO = createMockServiceDTO({ NextBus: null });
-    const dto: BusStopDTO = {
-      BusStopCode: "83139",
-      Services: [serviceDTO],
-    };
-
-    const result = mapBusStopDtoToModel(dto);
-    const service = result.services[0] as BusService;
-
-    expect(service.nextBus).toBeNull();
+    expect(service.serviceNo).toBe("66");
+    expect(service.nextBus).not.toBeNull();
+    expect(service.nextBus2).not.toBeNull();
+    expect(service.nextBus3).toBeNull();
   });
 
   test("handles multiple services", () => {
@@ -266,5 +251,75 @@ describe("mapBusStopDtoToModel", () => {
     const nextBus = service.nextBus as BusArrival;
 
     expect(nextBus.visitNumber).toBe(0);
+  });
+
+  test("handles API response with empty Services array (no more buses)", () => {
+    // This simulates the real API response when there are no buses
+    const dto: BusStopDTO = {
+      "odata.metadata":
+        "https://datamall2.mytransport.sg/ltaodataservice/v3/BusArrival",
+      BusStopCode: "98291",
+      Services: [],
+    };
+
+    const result = mapBusStopDtoToModel(dto);
+
+    expect(result.busStopCode).toBe("98291");
+    expect(result.services).toHaveLength(0);
+    expect(Array.isArray(result.services)).toBe(true);
+  });
+
+  test("handles multiple services with varying bus counts", () => {
+    const dto: BusStopDTO = {
+      BusStopCode: "83139",
+      Services: [
+        // Service with only 1 bus
+        createMockServiceDTO({
+          ServiceNo: "15",
+          NextBus: createMockBusDTO({ EstimatedArrival: new Date(Date.now() + 2 * 60000).toISOString() }),
+          NextBus2: EMPTY_BUS_DTO,
+          NextBus3: EMPTY_BUS_DTO,
+        }),
+        // Service with 2 buses
+        createMockServiceDTO({
+          ServiceNo: "66",
+          NextBus: createMockBusDTO({ EstimatedArrival: new Date(Date.now() + 1 * 60000).toISOString() }),
+          NextBus2: createMockBusDTO({ EstimatedArrival: new Date(Date.now() + 8 * 60000).toISOString() }),
+          NextBus3: EMPTY_BUS_DTO,
+        }),
+        // Service with all 3 buses
+        createMockServiceDTO({
+          ServiceNo: "170",
+          NextBus: createMockBusDTO({ EstimatedArrival: new Date(Date.now() + 3 * 60000).toISOString() }),
+          NextBus2: createMockBusDTO({ EstimatedArrival: new Date(Date.now() + 15 * 60000).toISOString() }),
+          NextBus3: createMockBusDTO({ EstimatedArrival: new Date(Date.now() + 25 * 60000).toISOString() }),
+        }),
+      ],
+    };
+
+    const result = mapBusStopDtoToModel(dto);
+
+    expect(result.services).toHaveLength(3);
+
+    // Service 15: only 1 bus
+    const service1 = result.services[0];
+    expect(service1.serviceNo).toBe("15");
+    expect(service1.nextBus).not.toBeNull();
+    expect(service1.nextBus2).toBeNull();
+    expect(service1.nextBus3).toBeNull();
+
+    // Service 66: 2 buses
+    const service2 = result.services[1];
+    expect(service2.serviceNo).toBe("66");
+    expect(service2.nextBus).not.toBeNull();
+    expect(service2.nextBus2).not.toBeNull();
+    expect(service2.nextBus3).toBeNull();
+
+    // Service 170: all 3 buses
+    const service3 = result.services[2];
+    expect(service3.serviceNo).toBe("170");
+    expect(service3.nextBus).not.toBeNull();
+    expect(service3.nextBus2).not.toBeNull();
+    expect(service3.nextBus3).not.toBeNull();
   });
 });

@@ -1,17 +1,20 @@
-import type { BusStopDTO, BusServiceDTO, BusDTO } from "../dtos/bus-arrival";
 import type {
-  BusStop,
-  BusService,
+  BusDTO,
+  BusServiceDTO,
+  BusStopDTO,
+} from "../dtos/bus-arrival-dto";
+import type {
   BusArrival,
-  BusLoad,
   BusFeature,
+  BusLoad,
+  BusService,
+  BusStop,
   BusType,
-} from "../models/bus-stop-models";
+} from "../models/bus-arrivals-model";
 
-function mapBusArrival(dto: BusDTO | null | undefined): BusArrival | null {
-  if (!dto || !dto.EstimatedArrival) {
-    return null;
-  }
+const mapBusArrival = (dto: BusDTO): BusArrival | null => {
+  // Check if EstimatedArrival is empty or not provided (EMPTY_BUS_DTO scenario)
+  if (!dto.EstimatedArrival || dto.EstimatedArrival === "") return null;
 
   return {
     originCode: dto.OriginCode,
@@ -24,21 +27,17 @@ function mapBusArrival(dto: BusDTO | null | undefined): BusArrival | null {
     feature: (dto.Feature as BusFeature) || "",
     type: (dto.Type as BusType) || "SD",
   };
-}
+};
 
-function mapBusService(dto: BusServiceDTO): BusService {
-  return {
-    serviceNo: dto.ServiceNo,
-    operator: dto.Operator,
-    nextBus: mapBusArrival(dto.NextBus),
-    nextBus2: mapBusArrival(dto.NextBus2),
-    nextBus3: mapBusArrival(dto.NextBus3),
-  };
-}
+const mapBusService = (dto: BusServiceDTO): BusService => ({
+  serviceNo: dto.ServiceNo,
+  operator: dto.Operator,
+  nextBus: mapBusArrival(dto.NextBus),
+  nextBus2: mapBusArrival(dto.NextBus2),
+  nextBus3: mapBusArrival(dto.NextBus3),
+});
 
-export function mapBusStopDtoToModel(dto: BusStopDTO): BusStop {
-  return {
-    busStopCode: dto.BusStopCode,
-    services: (dto.Services || []).map(mapBusService),
-  };
-}
+export const mapBusStopDtoToModel = (dto: BusStopDTO): BusStop => ({
+  busStopCode: dto.BusStopCode,
+  services: dto.Services.map(mapBusService),
+});

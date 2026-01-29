@@ -30,28 +30,29 @@ export interface BusStop {
 }
 
 // Computed properties helper
-export function getArrivalInMinutes(arrival: BusArrival): number {
+export const getArrivalInMinutes = (arrival: BusArrival): number => {
   const now = new Date();
   const diff = arrival.estimatedArrival.getTime() - now.getTime();
   return Math.max(0, Math.round(diff / 60000));
-}
+};
 
-export function formatArrivalTime(arrival: BusArrival): string {
+export const formatArrivalTime = (arrival: BusArrival): string => {
   const minutes = getArrivalInMinutes(arrival);
   if (minutes === 0) return "Arr";
   if (minutes === 1) return "1 min";
   return `${minutes} mins`;
-}
+};
 
-export function isArriving(arrival: BusArrival, withinMinutes: number = 5): boolean {
-  return getArrivalInMinutes(arrival) <= withinMinutes;
-}
+export const isArriving = (
+  arrival: BusArrival,
+  withinMinutes: number = 5,
+): boolean => getArrivalInMinutes(arrival) <= withinMinutes;
 
-export function getBusLoadLabel(load: BusLoad): string {
+export const getBusLoadLabel = (load: BusLoad): string => {
   const labels: Record<BusLoad, string> = {
     SEA: "Seats Available",
     SDA: "Standing Available",
     LSD: "Limited Standing",
   };
   return labels[load];
-}
+};

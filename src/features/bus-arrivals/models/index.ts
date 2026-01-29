@@ -1,1 +1,1 @@
-export * from "./bus-stop-models";
+export * from "./bus-arrivals-model";

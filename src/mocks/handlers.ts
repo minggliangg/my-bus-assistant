@@ -1,5 +1,6 @@
 import { http, HttpResponse } from "msw";
-import type { BusStopDTO } from "../features/bus-arrivals/dtos/bus-arrival";
+import type { BusStopDTO } from "../features/bus-arrivals/dtos/bus-arrival-dto";
+import { EMPTY_BUS_DTO } from "../features/bus-arrivals/dtos/bus-arrival-dto";
 
 // Mock API response for bus arrivals
 export const mockBusArrivalResponse: BusStopDTO = {
@@ -12,7 +13,7 @@ export const mockBusArrivalResponse: BusStopDTO = {
         OriginCode: "83139",
         DestinationCode: "96049",
         EstimatedArrival: new Date(Date.now() + 2 * 60000).toISOString(),
-        Monitored: true,
+        Monitored: 1,
         Latitude: "1.316748",
         Longitude: "103.900000",
         VisitNumber: "1",
@@ -24,7 +25,7 @@ export const mockBusArrivalResponse: BusStopDTO = {
         OriginCode: "83139",
         DestinationCode: "96049",
         EstimatedArrival: new Date(Date.now() + 10 * 60000).toISOString(),
-        Monitored: true,
+        Monitored: 1,
         Latitude: "1.316748",
         Longitude: "103.900000",
         VisitNumber: "2",
@@ -36,7 +37,7 @@ export const mockBusArrivalResponse: BusStopDTO = {
         OriginCode: "83139",
         DestinationCode: "96049",
         EstimatedArrival: new Date(Date.now() + 20 * 60000).toISOString(),
-        Monitored: true,
+        Monitored: 1,
         Latitude: "1.316748",
         Longitude: "103.900000",
         VisitNumber: "3",
@@ -52,7 +53,7 @@ export const mockBusArrivalResponse: BusStopDTO = {
         OriginCode: "83139",
         DestinationCode: "77009",
         EstimatedArrival: new Date(Date.now() + 1 * 60000).toISOString(),
-        Monitored: true,
+        Monitored: 1,
         Latitude: "1.316748",
         Longitude: "103.900000",
         VisitNumber: "1",
@@ -64,7 +65,7 @@ export const mockBusArrivalResponse: BusStopDTO = {
         OriginCode: "83139",
         DestinationCode: "77009",
         EstimatedArrival: new Date(Date.now() + 8 * 60000).toISOString(),
-        Monitored: true,
+        Monitored: 1,
         Latitude: "1.316748",
         Longitude: "103.900000",
         VisitNumber: "2",
@@ -72,7 +73,7 @@ export const mockBusArrivalResponse: BusStopDTO = {
         Feature: "",
         Type: "BD",
       },
-      NextBus3: null,
+      NextBus3: EMPTY_BUS_DTO,
     },
   ],
 };
@@ -98,7 +99,7 @@ function getMockBusArrivalResponse(busStopCode: string): BusStopDTO {
         OriginCode: busStopCode,
         DestinationCode: "96049",
         EstimatedArrival: new Date(Date.now() + 2 * 60000).toISOString(),
-        Monitored: true,
+        Monitored: 1,
         Latitude: "1.316748",
         Longitude: "103.900000",
         VisitNumber: "1",
@@ -110,7 +111,7 @@ function getMockBusArrivalResponse(busStopCode: string): BusStopDTO {
         OriginCode: busStopCode,
         DestinationCode: "96049",
         EstimatedArrival: new Date(Date.now() + 10 * 60000).toISOString(),
-        Monitored: true,
+        Monitored: 1,
         Latitude: "1.316748",
         Longitude: "103.900000",
         VisitNumber: "2",
@@ -122,7 +123,7 @@ function getMockBusArrivalResponse(busStopCode: string): BusStopDTO {
         OriginCode: busStopCode,
         DestinationCode: "96049",
         EstimatedArrival: new Date(Date.now() + 20 * 60000).toISOString(),
-        Monitored: true,
+        Monitored: 1,
         Latitude: "1.316748",
         Longitude: "103.900000",
         VisitNumber: "3",
@@ -138,7 +139,7 @@ function getMockBusArrivalResponse(busStopCode: string): BusStopDTO {
         OriginCode: busStopCode,
         DestinationCode: "77009",
         EstimatedArrival: new Date(Date.now() + 1 * 60000).toISOString(),
-        Monitored: true,
+        Monitored: 1,
         Latitude: "1.316748",
         Longitude: "103.900000",
         VisitNumber: "1",
@@ -150,7 +151,7 @@ function getMockBusArrivalResponse(busStopCode: string): BusStopDTO {
         OriginCode: busStopCode,
         DestinationCode: "77009",
         EstimatedArrival: new Date(Date.now() + 8 * 60000).toISOString(),
-        Monitored: true,
+        Monitored: 1,
         Latitude: "1.316748",
         Longitude: "103.900000",
         VisitNumber: "2",
@@ -158,7 +159,7 @@ function getMockBusArrivalResponse(busStopCode: string): BusStopDTO {
         Feature: "",
         Type: "BD",
       },
-      NextBus3: null,
+      NextBus3: EMPTY_BUS_DTO,
     },
   ]);
 }
@@ -173,7 +174,7 @@ function getMockBusArrivingNowResponse(busStopCode: string): BusStopDTO {
         OriginCode: busStopCode,
         DestinationCode: "96049",
         EstimatedArrival: new Date(Date.now() + 30000).toISOString(),
-        Monitored: true,
+        Monitored: 1,
         Latitude: "1.316748",
         Longitude: "103.900000",
         VisitNumber: "1",
@@ -181,8 +182,8 @@ function getMockBusArrivingNowResponse(busStopCode: string): BusStopDTO {
         Feature: "",
         Type: "DD",
       },
-      NextBus2: null,
-      NextBus3: null,
+      NextBus2: EMPTY_BUS_DTO,
+      NextBus3: EMPTY_BUS_DTO,
     },
   ]);
 }

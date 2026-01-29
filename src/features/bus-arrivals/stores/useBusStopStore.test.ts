@@ -11,6 +11,7 @@ import {
 import { act, renderHook } from "@testing-library/react";
 import { server } from "@/mocks/server";
 import useBusStore from "./useBusStopStore";
+import { EMPTY_BUS_DTO } from "../dtos/bus-arrival-dto";
 
 describe("useBusStopStore", () => {
   beforeAll(() => {
@@ -166,14 +167,16 @@ describe("useBusStopStore", () => {
           Services: [{
             ServiceNo: "15",
             Operator: "SBST",
-            NextBus: null,
-            NextBus2: null,
-            NextBus3: null,
+            NextBus: EMPTY_BUS_DTO,
+            NextBus2: EMPTY_BUS_DTO,
+            NextBus3: EMPTY_BUS_DTO,
           }],
         }),
       } as Response);
 
     const { result } = renderHook(() => useBusStore());
+    const now = Date.now();
+    vi.setSystemTime(now);
 
     // First fetch with error
     await act(async () => {
@@ -182,7 +185,10 @@ describe("useBusStopStore", () => {
 
     expect(result.current.error).toBe("API Error: 404");
 
-    // Second fetch with success
+    // Advance time past retry window (5 seconds)
+    vi.setSystemTime(now + 6000);
+
+    // Second fetch with success (different bus stop code to avoid throttle)
     await act(async () => {
       await result.current.fetchBusArrivals("success-after");
     });
@@ -355,7 +361,10 @@ describe("useBusStopStore", () => {
       expect(result.current.error).toBe("API Error: 500");
       expect(result.current.lastAttemptTimestamp).toBe(now);
 
-      // Second fetch should succeed even within throttle window
+      // Advance time past the retry window (5 seconds)
+      vi.setSystemTime(now + 6000);
+
+      // Second fetch should succeed even within throttle window (45s)
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -363,9 +372,9 @@ describe("useBusStopStore", () => {
           Services: [{
             ServiceNo: "15",
             Operator: "SBST",
-            NextBus: null,
-            NextBus2: null,
-            NextBus3: null,
+            NextBus: EMPTY_BUS_DTO,
+            NextBus2: EMPTY_BUS_DTO,
+            NextBus3: EMPTY_BUS_DTO,
           }],
         }),
       } as Response);

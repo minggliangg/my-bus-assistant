@@ -14,13 +14,26 @@ export type BusDTO = {
 export type BusServiceDTO = {
   ServiceNo: string;
   Operator: string;
-  NextBus?: BusDTO;
-  NextBus2?: BusDTO;
-  NextBus3?: BusDTO;
+  NextBus: BusDTO;
+  NextBus2: BusDTO;
+  NextBus3: BusDTO;
 };
 
 export type BusStopDTO = {
   "odata.metadata"?: string;
   BusStopCode: string;
-  Services?: BusServiceDTO[];
+  Services: BusServiceDTO[];
+};
+
+export const EMPTY_BUS_DTO: BusDTO = {
+  OriginCode: "",
+  DestinationCode: "",
+  EstimatedArrival: "",
+  Monitored: 0,
+  Latitude: "",
+  Longitude: "",
+  VisitNumber: "",
+  Load: "",
+  Feature: "",
+  Type: "",
 };

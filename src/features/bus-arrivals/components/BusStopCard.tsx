@@ -20,14 +20,14 @@ import {
   formatArrivalTime,
   getArrivalInMinutes,
   type BusService,
-} from "../models/bus-stop-models";
+} from "../models/bus-arrivals-model";
 import useBusStore, { type ChangedField } from "../stores/useBusStopStore";
 
 interface BusStopCardProps {
   busStopCode: string;
 }
 
-export function BusStopCard({ busStopCode }: BusStopCardProps) {
+export const BusStopCard = ({ busStopCode }: BusStopCardProps) => {
   const {
     busStop,
     loading,
@@ -167,7 +167,7 @@ export function BusStopCard({ busStopCode }: BusStopCardProps) {
       </CardContent>
     </Card>
   );
-}
+};
 
 const BusServiceRow = ({
   service,

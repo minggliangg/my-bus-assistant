@@ -1,15 +1,15 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
-  getArrivalInMinutes,
   formatArrivalTime,
-  isArriving,
+  getArrivalInMinutes,
   getBusLoadLabel,
+  isArriving,
   type BusArrival,
   type BusLoad,
-} from "./bus-stop-models";
+} from "./bus-arrivals-model";
 
 // Helper to create an arrival at a specific minute offset from now
-function createArrivalAt(minutesFromNow: number): BusArrival {
+const createArrivalAt = (minutesFromNow: number): BusArrival => {
   const now = Date.now();
   const estimatedArrival = new Date(now + minutesFromNow * 60000);
 
@@ -24,7 +24,7 @@ function createArrivalAt(minutesFromNow: number): BusArrival {
     feature: "",
     type: "SD",
   };
-}
+};
 
 describe("getArrivalInMinutes", () => {
   test("calculates correct minutes from now", () => {
@@ -177,7 +177,11 @@ describe("getBusLoadLabel", () => {
 
   test("handles all BusLoad types", () => {
     const loads: BusLoad[] = ["SEA", "SDA", "LSD"];
-    const expected = ["Seats Available", "Standing Available", "Limited Standing"];
+    const expected = [
+      "Seats Available",
+      "Standing Available",
+      "Limited Standing",
+    ];
 
     loads.forEach((load, index) => {
       expect(getBusLoadLabel(load)).toBe(expected[index]);
