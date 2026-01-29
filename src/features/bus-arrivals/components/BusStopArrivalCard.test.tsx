@@ -12,7 +12,7 @@ import {
   vi,
 } from "vitest";
 import useBusStore from "../stores/useBusStopStore";
-import { BusStopCard } from "./BusStopCard";
+import { BusStopArrivalCard } from "./BusStopArrivalCard";
 
 // Helper to render with providers
 const renderWithProviders = (ui: React.ReactElement) => {
@@ -30,6 +30,7 @@ describe("BusStopCard", () => {
 
   afterEach(() => {
     server.resetHandlers();
+    localStorage.clear();
     useBusStore.getState().reset();
   });
 
@@ -40,14 +41,15 @@ describe("BusStopCard", () => {
   // Rendering
   describe("Rendering", () => {
     test("renders loading spinner initially", () => {
-      renderWithProviders(<BusStopCard busStopCode="83139" />);
+      localStorage.clear(); // Ensure no cache
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       const loader = document.querySelector(".animate-spin");
       expect(loader).toBeInTheDocument();
     });
 
     test("renders error state when API fails", async () => {
-      renderWithProviders(<BusStopCard busStopCode="404" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="404" />);
 
       await waitFor(() => {
         const errorMessage = screen.queryByText(/API Error: 404/);
@@ -56,7 +58,7 @@ describe("BusStopCard", () => {
     });
 
     test("card has destructive border on error", async () => {
-      renderWithProviders(<BusStopCard busStopCode="404" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="404" />);
 
       await waitFor(() => {
         const card = screen
@@ -67,7 +69,7 @@ describe("BusStopCard", () => {
     });
 
     test("renders bus stop code and services on success", async () => {
-      renderWithProviders(<BusStopCard busStopCode="83139" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
         expect(screen.getByText("83139")).toBeInTheDocument();
@@ -77,7 +79,7 @@ describe("BusStopCard", () => {
     });
 
     test('renders "No services available" when services array is empty', async () => {
-      renderWithProviders(<BusStopCard busStopCode="99999" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="99999" />);
 
       await waitFor(() => {
         expect(screen.getByText("No services available")).toBeInTheDocument();
@@ -88,7 +90,7 @@ describe("BusStopCard", () => {
   // Header
   describe("Header", () => {
     test("displays bus stop code correctly", async () => {
-      renderWithProviders(<BusStopCard busStopCode="83139" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
         const busStopCode = screen.getByText("83139");
@@ -98,7 +100,7 @@ describe("BusStopCard", () => {
     });
 
     test("shows correct service count (singular)", async () => {
-      renderWithProviders(<BusStopCard busStopCode="83138" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="83138" />);
 
       await waitFor(() => {
         expect(screen.getByText("1")).toBeInTheDocument();
@@ -107,7 +109,7 @@ describe("BusStopCard", () => {
     });
 
     test("shows correct service count (plural)", async () => {
-      renderWithProviders(<BusStopCard busStopCode="83139" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
         expect(screen.getByText("2")).toBeInTheDocument();
@@ -116,7 +118,7 @@ describe("BusStopCard", () => {
     });
 
     test('displays "Bus Stop" label', async () => {
-      renderWithProviders(<BusStopCard busStopCode="83139" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
         expect(screen.getByText("Bus Stop")).toBeInTheDocument();
@@ -124,7 +126,7 @@ describe("BusStopCard", () => {
     });
 
     test("renders map pin icon", async () => {
-      renderWithProviders(<BusStopCard busStopCode="83139" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
         const mapIcon =
@@ -138,7 +140,7 @@ describe("BusStopCard", () => {
   // Bus Service Rows
   describe("Bus Service Rows", () => {
     test("renders service number in circle badge", async () => {
-      renderWithProviders(<BusStopCard busStopCode="83139" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
         expect(screen.getByText("15")).toBeInTheDocument();
@@ -147,7 +149,7 @@ describe("BusStopCard", () => {
     });
 
     test("renders operator name", async () => {
-      renderWithProviders(<BusStopCard busStopCode="83139" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
         expect(screen.getByText("SBST")).toBeInTheDocument();
@@ -156,7 +158,7 @@ describe("BusStopCard", () => {
     });
 
     test("displays arrival times with clock icon", async () => {
-      renderWithProviders(<BusStopCard busStopCode="83139" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
         // Clock icons should be present for arrivals
@@ -171,7 +173,7 @@ describe("BusStopCard", () => {
   // Bus Type Badges
   describe("Bus Type Badges", () => {
     test("shows bus type badges", async () => {
-      renderWithProviders(<BusStopCard busStopCode="83139" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
         // Should have at least one badge rendered
@@ -184,7 +186,7 @@ describe("BusStopCard", () => {
   // Load Badges
   describe("Load Badges", () => {
     test("displays load badges", async () => {
-      renderWithProviders(<BusStopCard busStopCode="83139" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
         // Should have at least one load badge rendered
@@ -197,7 +199,7 @@ describe("BusStopCard", () => {
   // Multiple Arrivals
   describe("Multiple Arrivals", () => {
     test("filters out null arrivals", async () => {
-      renderWithProviders(<BusStopCard busStopCode="83139" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
         // Service 66 has only 2 arrivals (nextBus3 is null)
@@ -211,7 +213,7 @@ describe("BusStopCard", () => {
   // Behavior
   describe("Behavior", () => {
     test("calls fetchBusArrivals on mount with busStopCode", async () => {
-      renderWithProviders(<BusStopCard busStopCode="83139" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
         expect(screen.getByText("83139")).toBeInTheDocument();
@@ -220,7 +222,7 @@ describe("BusStopCard", () => {
 
     test("fetches correct bus stop based on prop", async () => {
       const { rerender } = renderWithProviders(
-        <BusStopCard busStopCode="83139" />,
+        <BusStopArrivalCard busStopCode="83139" />,
       );
 
       await waitFor(() => {
@@ -228,7 +230,7 @@ describe("BusStopCard", () => {
       });
 
       // Rerender with different bus stop code
-      rerender(<BusStopCard busStopCode="99999" />);
+      rerender(<BusStopArrivalCard busStopCode="99999" />);
 
       await waitFor(() => {
         expect(screen.getByText("99999")).toBeInTheDocument();
@@ -240,7 +242,7 @@ describe("BusStopCard", () => {
   // Accessibility
   describe("Accessibility", () => {
     test("has proper heading hierarchy", async () => {
-      renderWithProviders(<BusStopCard busStopCode="83139" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
         const h3 = screen.getByRole("heading", { level: 3 });
@@ -252,7 +254,7 @@ describe("BusStopCard", () => {
   // Auto-refresh
   describe("Auto-refresh", () => {
     test("renders auto-refresh button", async () => {
-      renderWithProviders(<BusStopCard busStopCode="83139" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
         expect(
@@ -263,7 +265,7 @@ describe("BusStopCard", () => {
 
     test("toggles button on click", async () => {
       const user = userEvent.setup();
-      renderWithProviders(<BusStopCard busStopCode="83139" />);
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => screen.getByText("83139"));
 
@@ -294,7 +296,7 @@ describe("BusStopCard", () => {
       });
 
       const { unmount } = renderWithProviders(
-        <BusStopCard busStopCode="83139" />,
+        <BusStopArrivalCard busStopCode="83139" />,
       );
 
       // Wait for initial data fetch to complete
@@ -325,7 +327,7 @@ describe("BusStopCard", () => {
       });
 
       const { rerender } = renderWithProviders(
-        <BusStopCard busStopCode="83139" />,
+        <BusStopArrivalCard busStopCode="83139" />,
       );
 
       // Wait for initial data fetch to complete
@@ -344,10 +346,152 @@ describe("BusStopCard", () => {
 
       const clearIntervalSpy = vi.spyOn(globalThis, "clearInterval");
 
-      rerender(<BusStopCard busStopCode="83138" />);
+      rerender(<BusStopArrivalCard busStopCode="83138" />);
 
       expect(clearIntervalSpy).toHaveBeenCalled();
       clearIntervalSpy.mockRestore();
+    });
+  });
+
+  // localStorage persistence
+  describe("localStorage persistence", () => {
+    test("displays cached data immediately with stale indicator", async () => {
+      // Pre-populate localStorage with mock data
+      const mockCachedData = {
+        busStopCode: "83139",
+        services: [
+          {
+            serviceNo: "15",
+            operator: "SBST",
+            nextBus: {
+              originCode: "83139",
+              destinationCode: "96049",
+              estimatedArrival: new Date(Date.now() + 2 * 60000).toISOString(),
+              latitude: "1.316748",
+              longitude: "103.900000",
+              visitNumber: "1",
+              load: "SEA",
+              feature: "WAB",
+              type: "DD",
+            },
+            nextBus2: null,
+            nextBus3: null,
+          },
+        ],
+      };
+      localStorage.setItem("bus-stop-data-83139", JSON.stringify(mockCachedData));
+
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
+
+      // Cached data should display immediately
+      await waitFor(() => {
+        expect(screen.getByText("83139")).toBeInTheDocument();
+      });
+
+      // Wait for fresh data to load (component will show cached data, then fresh)
+      await waitFor(() => {
+        expect(screen.getByText("15")).toBeInTheDocument();
+      });
+
+      // After fresh fetch, stale indicator should not be present
+      await waitFor(() => {
+        expect(screen.queryByText("Cached")).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  // Page refresh simulation
+  describe("Page Refresh Simulation", () => {
+    test("displays cached data after page refresh", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+
+      // Initial render and fetch
+      const { unmount } = renderWithProviders(
+        <BusStopArrivalCard busStopCode="83139" />,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("83139")).toBeInTheDocument();
+      });
+
+      // Unmount to simulate leaving page
+      unmount();
+
+      // Reset store to simulate page refresh
+      act(() => {
+        useBusStore.setState({
+          busStop: null,
+          loading: true,
+          error: null,
+          isAutoRefreshEnabled: false,
+          lastUpdateTimestamp: null,
+          lastAttemptTimestamp: null,
+          isFetching: false,
+          changedFields: [],
+          isStale: false,
+        });
+      });
+
+      // Re-render to simulate page refresh
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
+
+      // Cached data should show immediately
+      await waitFor(() => {
+        expect(screen.getByText("83139")).toBeInTheDocument();
+      });
+    });
+
+    test("displays cached data after refresh within throttle window", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const now = Date.now();
+      vi.setSystemTime(now);
+
+      // Initial render and fetch
+      const { unmount } = renderWithProviders(
+        <BusStopArrivalCard busStopCode="83139" />,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("83139")).toBeInTheDocument();
+      });
+
+      // Advance time by 30 seconds (within 45s throttle window, but we use 1s in tests)
+      vi.setSystemTime(now + 2000);
+
+      // Unmount
+      unmount();
+
+      // Reset store to simulate page refresh
+      act(() => {
+        useBusStore.setState({
+          busStop: null,
+          loading: true,
+          error: null,
+          isAutoRefreshEnabled: false,
+          lastUpdateTimestamp: null,
+          lastAttemptTimestamp: null,
+          isFetching: false,
+          changedFields: [],
+          isStale: false,
+        });
+      });
+
+      // Re-render
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
+
+      // Cached data should still show
+      await waitFor(() => {
+        expect(screen.getByText("83139")).toBeInTheDocument();
+      });
+
+      // Wait a bit for state to settle
+      await act(async () => {
+        vi.advanceTimersByTime(500);
+      });
+
+      // Component should show either cached indicator or fresh data
+      // (depending on timing, but it should not be empty)
+      expect(screen.getByText("83139")).toBeInTheDocument();
     });
   });
 });

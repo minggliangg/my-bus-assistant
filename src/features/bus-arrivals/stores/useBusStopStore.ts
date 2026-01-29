@@ -22,11 +22,60 @@ interface BusStopStore {
   lastAttemptTimestamp: number | null;
   isFetching: boolean;
   changedFields: ChangedField[]; // Track recently changed fields
+  isStale: boolean; // Indicates if displayed data is from cache
   fetchBusArrivals: (busStopCode: string) => Promise<void>;
   toggleAutoRefresh: () => void;
   clearChangedFields: () => void; // Cleanup old changes
   reset: () => void; // Reset store to initial state (for testing)
 }
+
+// Serialization helpers for localStorage persistence
+const serializeBusStop = (busStop: BusStop): string => {
+  return JSON.stringify(busStop, (key, value) => {
+    // Convert Date objects to ISO strings
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+    return value;
+  });
+};
+
+const deserializeBusStop = (json: string): BusStop => {
+  return JSON.parse(json, (key, value) => {
+    // Convert ISO strings back to Date objects for estimatedArrival fields
+    if (
+      typeof value === "string" &&
+      (key === "estimatedArrival" || key === "nextBusEstimatedArrival") &&
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)
+    ) {
+      return new Date(value);
+    }
+    return value;
+  });
+};
+
+const loadCachedBusStop = (busStopCode: string): BusStop | null => {
+  try {
+    const cacheKey = `bus-stop-data-${busStopCode}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      return deserializeBusStop(cached);
+    }
+  } catch (error) {
+    console.warn("Failed to load cached bus stop data:", error);
+  }
+  return null;
+};
+
+const saveBusStopToCache = (busStopCode: string, busStop: BusStop): void => {
+  try {
+    const cacheKey = `bus-stop-data-${busStopCode}`;
+    const serialized = serializeBusStop(busStop);
+    localStorage.setItem(cacheKey, serialized);
+  } catch (error) {
+    console.warn("Failed to save bus stop data to cache:", error);
+  }
+};
 
 const useBusStore = create<BusStopStore>((set, get) => {
   // Helper to compare bus arrivals and detect changes
@@ -90,13 +139,14 @@ const useBusStore = create<BusStopStore>((set, get) => {
 
   return {
     busStop: null,
-    loading: false,
+    loading: true,
     error: null,
     isAutoRefreshEnabled: false,
     lastUpdateTimestamp: null,
     lastAttemptTimestamp: null,
     isFetching: false,
     changedFields: [],
+    isStale: false,
 
     fetchBusArrivals: async (busStopCode: string) => {
       const THROTTLE_INTERVAL_MS = parseInt(
@@ -111,6 +161,18 @@ const useBusStore = create<BusStopStore>((set, get) => {
       if (currentState.isFetching) {
         console.log("Fetch skipped: already in progress");
         return;
+      }
+
+      // Load cached data if we don't have any data yet
+      if (!currentState.busStop) {
+        const cachedBusStop = loadCachedBusStop(busStopCode);
+        if (cachedBusStop) {
+          set({
+            busStop: cachedBusStop,
+            loading: false,
+            isStale: true,
+          });
+        }
       }
 
       // Check throttle, but allow retry if last attempt failed
@@ -177,12 +239,16 @@ const useBusStore = create<BusStopStore>((set, get) => {
           console.warn("Failed to save timestamp:", error);
         }
 
+        // Save bus stop data to cache
+        saveBusStopToCache(busStopCode, busStop);
+
         set({
           busStop,
           loading: false,
           lastUpdateTimestamp: now,
           isFetching: false,
           changedFields: updatedChanges,
+          isStale: false,
         });
       } catch (error) {
         set({
@@ -204,15 +270,30 @@ const useBusStore = create<BusStopStore>((set, get) => {
     },
 
     reset: () => {
+      // Clear all cached bus stop data from localStorage
+      try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key?.startsWith("bus-stop-data-")) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach((key) => localStorage.removeItem(key));
+      } catch (error) {
+        console.warn("Failed to clear cached bus stop data:", error);
+      }
+
       set({
         busStop: null,
-        loading: false,
+        loading: true,
         error: null,
         isAutoRefreshEnabled: false,
         lastUpdateTimestamp: null,
         lastAttemptTimestamp: null,
         isFetching: false,
         changedFields: [],
+        isStale: false,
       });
     },
   };

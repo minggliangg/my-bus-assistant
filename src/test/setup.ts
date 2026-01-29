@@ -8,23 +8,24 @@ import.meta.env.VITE_THROTTLE_INTERVAL_MS = "1000";
 // Setup global DOM environment
 if (typeof globalThis !== 'undefined') {
   // Setup localStorage mock
-  const localStorageMock = (() => {
-    let store: Record<string, string> = {};
-    return {
-      getItem: (key: string) => store[key] || null,
-      setItem: (key: string, value: string) => {
-        store[key] = String(value);
-      },
-      removeItem: (key: string) => {
-        delete store[key];
-      },
-      clear: () => {
-        store = {};
-      },
-      length: Object.keys(store).length,
-      key: (index: number) => Object.keys(store)[index] || null,
-    };
-  })();
+  let store: Record<string, string> = {};
+
+  const localStorageMock = {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => {
+      store[key] = String(value);
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+    get length() {
+      return Object.keys(store).length;
+    },
+    key: (index: number) => Object.keys(store)[index] || null,
+  };
 
   Object.defineProperty(globalThis, 'localStorage', {
     value: localStorageMock,

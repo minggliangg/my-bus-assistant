@@ -23,11 +23,13 @@ import {
 } from "../models/bus-arrivals-model";
 import useBusStore, { type ChangedField } from "../stores/useBusStopStore";
 
-interface BusStopCardProps {
+interface BusStopArrivalCardProps {
   busStopCode: string;
 }
 
-export const BusStopCard = ({ busStopCode }: BusStopCardProps) => {
+export const BusStopArrivalCard = ({
+  busStopCode,
+}: BusStopArrivalCardProps) => {
   const {
     busStop,
     loading,
@@ -37,6 +39,7 @@ export const BusStopCard = ({ busStopCode }: BusStopCardProps) => {
     isFetching,
     toggleAutoRefresh,
     changedFields,
+    isStale,
   } = useBusStore();
 
   useEffect(() => {
@@ -86,7 +89,17 @@ export const BusStopCard = ({ busStopCode }: BusStopCardProps) => {
     );
   }
 
-  if (!busStop) return null;
+  if (!busStop) {
+    return (
+      <Card>
+        <CardContent className="py-6">
+          <p className="text-sm text-muted-foreground text-center">
+            No bus stop data available
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -119,6 +132,12 @@ export const BusStopCard = ({ busStopCode }: BusStopCardProps) => {
         </div>
 
         <CardAction>
+          {isStale && !isFetching && (
+            <div className="flex h-9 items-center gap-2 rounded-lg bg-amber-100 dark:bg-amber-900/30 px-3 text-amber-700 dark:text-amber-400">
+              <Clock className="h-4 w-4" />
+              <span className="text-xs font-medium">Cached</span>
+            </div>
+          )}
           <button
             onClick={toggleAutoRefresh}
             disabled={isFetching}

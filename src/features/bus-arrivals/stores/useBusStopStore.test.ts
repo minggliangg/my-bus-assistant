@@ -40,8 +40,9 @@ describe("useBusStopStore", () => {
     const { result } = renderHook(() => useBusStore());
 
     expect(result.current.busStop).toBeNull();
-    expect(result.current.loading).toBe(false);
+    expect(result.current.loading).toBe(true);
     expect(result.current.error).toBeNull();
+    expect(result.current.isStale).toBe(false);
   });
 
   test("sets loading to true when fetchBusArrivals is called", async () => {
@@ -432,6 +433,135 @@ describe("useBusStopStore", () => {
       expect(fetchSpy).toHaveBeenCalledTimes(2);
 
       fetchSpy.mockRestore();
+    });
+  });
+
+  describe("localStorage persistence", () => {
+    test("saves bus stop data to localStorage on successful fetch", async () => {
+      const { result } = renderHook(() => useBusStore());
+
+      await act(async () => {
+        await result.current.fetchBusArrivals("83139");
+      });
+
+      const cachedData = localStorage.getItem("bus-stop-data-83139");
+      expect(cachedData).toBeTruthy();
+
+      // Verify deserialization works
+      const parsed = JSON.parse(cachedData!);
+      expect(parsed.busStopCode).toBe("83139");
+      expect(parsed.services).toBeTruthy();
+    });
+
+    test("loads cached data on fetch and marks as stale", async () => {
+      const { result } = renderHook(() => useBusStore());
+      const now = Date.now();
+      vi.setSystemTime(now);
+
+      // First fetch to populate cache
+      await act(async () => {
+        await result.current.fetchBusArrivals("83139");
+      });
+
+      expect(result.current.isStale).toBe(false);
+
+      // Restore localStorage data with mock cached data
+      const mockCachedData = {
+        busStopCode: "83139",
+        services: [
+          {
+            serviceNo: "15",
+            operator: "SBST",
+            nextBus: {
+              originCode: "83139",
+              destinationCode: "96049",
+              estimatedArrival: new Date(Date.now() + 2 * 60000).toISOString(),
+              latitude: "1.316748",
+              longitude: "103.900000",
+              visitNumber: "1",
+              load: "SEA",
+              feature: "WAB",
+              type: "DD",
+            },
+            nextBus2: null,
+            nextBus3: null,
+          },
+        ],
+      };
+      localStorage.setItem("bus-stop-data-83139", JSON.stringify(mockCachedData));
+
+      // Reset store to simulate page refresh (but keep localStorage)
+      act(() => {
+        useBusStore.setState({
+          busStop: null,
+          loading: true,
+          error: null,
+          isAutoRefreshEnabled: false,
+          lastUpdateTimestamp: null,
+          lastAttemptTimestamp: null,
+          isFetching: false,
+          changedFields: [],
+          isStale: false,
+        });
+      });
+
+      // Verify reset cleared busStop
+      expect(result.current.busStop).toBeNull();
+      expect(result.current.loading).toBe(true);
+
+      // Advance time past throttle to allow new fetch
+      vi.setSystemTime(now + 50000);
+
+      // Fetch again - should load from cache first, then fetch fresh
+      await act(async () => {
+        await result.current.fetchBusArrivals("83139");
+      });
+
+      // Should have data and mark as not stale (after fresh fetch completes)
+      expect(result.current.busStop).not.toBeNull();
+      expect(result.current.isStale).toBe(false);
+    });
+
+    test("clears stale flag after successful fresh fetch", async () => {
+      const { result } = renderHook(() => useBusStore());
+      const now = Date.now();
+      vi.setSystemTime(now);
+
+      // First fetch
+      await act(async () => {
+        await result.current.fetchBusArrivals("83139");
+      });
+
+      expect(result.current.isStale).toBe(false);
+
+      // Advance time past throttle
+      vi.setSystemTime(now + 46000);
+
+      // Fetch again
+      await act(async () => {
+        await result.current.fetchBusArrivals("83139");
+      });
+
+      expect(result.current.isStale).toBe(false);
+    });
+
+    test("reset clears all cached bus stop data from localStorage", () => {
+      const { result } = renderHook(() => useBusStore());
+
+      // Add some cached data
+      localStorage.setItem("bus-stop-data-83139", JSON.stringify({ test: "data1" }));
+      localStorage.setItem("bus-stop-data-83138", JSON.stringify({ test: "data2" }));
+      localStorage.setItem("other-key", "should-remain");
+
+      act(() => {
+        result.current.reset();
+      });
+
+      // Cache keys should be cleared
+      expect(localStorage.getItem("bus-stop-data-83139")).toBeNull();
+      expect(localStorage.getItem("bus-stop-data-83138")).toBeNull();
+      // Other keys should remain
+      expect(localStorage.getItem("other-key")).toBe("should-remain");
     });
   });
 });

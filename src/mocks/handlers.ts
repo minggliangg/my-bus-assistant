@@ -215,6 +215,9 @@ export const handlers = [
     if (busStopCode === "83139") {
       return HttpResponse.json(getMockBusArrivalResponse(busStopCode));
     }
+    if (busStopCode === "55281") {
+      return HttpResponse.json(getMockBusArrivalResponse(busStopCode));
+    }
     if (busStopCode === "83138") {
       return HttpResponse.json(getMockBusArrivingNowResponse(busStopCode));
     }

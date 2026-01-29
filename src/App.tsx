@@ -1,5 +1,5 @@
 import "./App.css";
-import { BusStopCard } from "./features/bus-arrivals/components/BusStopCard";
+import { BusStopArrivalCard } from "./features/bus-arrivals/components/BusStopArrivalCard";
 
 const App = () => (
   <div className="min-h-screen min-w-[375px] bg-background p-4 sm:p-6">
@@ -11,7 +11,7 @@ const App = () => (
         </p>
       </header>
 
-      <BusStopCard busStopCode="55281" />
+      <BusStopArrivalCard busStopCode="55281" />
     </div>
   </div>
 );
