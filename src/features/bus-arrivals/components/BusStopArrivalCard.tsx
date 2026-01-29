@@ -118,55 +118,59 @@ export const BusStopArrivalCard = ({
               </h3>
             </div>
           </div>
-          <div className="flex items-center gap-3 sm:flex-col sm:items-end sm:gap-1">
-            <div className="flex h-9 items-center rounded-lg bg-muted px-3">
-              <Bus className="h-4 w-4 text-muted-foreground mr-2" />
-              <span className="text-sm font-semibold">
-                {busStop.services.length}
-              </span>
+          <CardAction>
+            <div className="flex items-center gap-2">
+              {isStale && !isFetching && (
+                <div className="flex h-9 items-center gap-2 rounded-lg bg-amber-100 dark:bg-amber-900/30 px-3 text-amber-700 dark:text-amber-400">
+                  <Clock className="h-4 w-4" />
+                  <span className="text-xs font-medium">Cached</span>
+                </div>
+              )}
+              <button
+                onClick={toggleAutoRefresh}
+                disabled={isFetching}
+                className={cn(
+                  "flex h-9 items-center gap-2 rounded-lg px-3 transition-colors disabled:opacity-50",
+                  isAutoRefreshEnabled
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80",
+                )}
+                aria-label={
+                  isAutoRefreshEnabled
+                    ? "Stop auto-refresh"
+                    : "Start auto-refresh"
+                }
+              >
+                {isFetching ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : isAutoRefreshEnabled ? (
+                  <PauseCircle className="h-4 w-4" />
+                ) : (
+                  <PlayCircle className="h-4 w-4" />
+                )}
+                <span className="text-sm font-medium">
+                  {isFetching
+                    ? "Refreshing..."
+                    : isAutoRefreshEnabled
+                      ? "Stop"
+                      : "Auto"}
+                </span>
+              </button>
             </div>
-            <p className="text-xs text-muted-foreground whitespace-nowrap">
-              {busStop.services.length === 1 ? "service" : "services"}
-            </p>
-          </div>
+          </CardAction>
         </div>
 
-        <CardAction>
-          {isStale && !isFetching && (
-            <div className="flex h-9 items-center gap-2 rounded-lg bg-amber-100 dark:bg-amber-900/30 px-3 text-amber-700 dark:text-amber-400">
-              <Clock className="h-4 w-4" />
-              <span className="text-xs font-medium">Cached</span>
-            </div>
-          )}
-          <button
-            onClick={toggleAutoRefresh}
-            disabled={isFetching}
-            className={cn(
-              "flex h-9 items-center gap-2 rounded-lg px-3 transition-colors disabled:opacity-50",
-              isAutoRefreshEnabled
-                ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                : "bg-muted text-muted-foreground hover:bg-muted/80",
-            )}
-            aria-label={
-              isAutoRefreshEnabled ? "Stop auto-refresh" : "Start auto-refresh"
-            }
-          >
-            {isFetching ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : isAutoRefreshEnabled ? (
-              <PauseCircle className="h-4 w-4" />
-            ) : (
-              <PlayCircle className="h-4 w-4" />
-            )}
-            <span className="text-sm font-medium">
-              {isFetching
-                ? "Refreshing..."
-                : isAutoRefreshEnabled
-                  ? "Stop"
-                  : "Auto"}
+        <div className="flex items-center gap-3 sm:flex-col sm:items-end sm:gap-1">
+          <div className="flex h-9 items-center rounded-lg bg-muted px-3">
+            <Bus className="h-4 w-4 text-muted-foreground mr-2" />
+            <span className="text-sm font-semibold">
+              {busStop.services.length}
             </span>
-          </button>
-        </CardAction>
+          </div>
+          <p className="text-xs text-muted-foreground whitespace-nowrap">
+            {busStop.services.length === 1 ? "service" : "services"}
+          </p>
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-3">
