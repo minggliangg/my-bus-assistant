@@ -1,7 +1,17 @@
-import { describe, test, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import { userEvent } from "@testing-library/user-event";
 import { server } from "@/mocks/server";
+import { act, render, screen, waitFor } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
+import useBusStore from "../stores/useBusStopStore";
 import { BusStopCard } from "./BusStopCard";
 
 // Helper to render with providers
@@ -10,12 +20,20 @@ const renderWithProviders = (ui: React.ReactElement) => {
 };
 
 describe("BusStopCard", () => {
-  beforeEach(() => {
+  beforeAll(() => {
     server.listen({ onUnhandledRequest: "error" });
+  });
+
+  afterAll(() => {
+    server.close();
   });
 
   afterEach(() => {
     server.resetHandlers();
+    useBusStore.getState().reset();
+  });
+
+  beforeEach(() => {
     vi.useRealTimers();
   });
 
@@ -41,7 +59,9 @@ describe("BusStopCard", () => {
       renderWithProviders(<BusStopCard busStopCode="404" />);
 
       await waitFor(() => {
-        const card = screen.queryByText(/API Error: 404/)?.closest(".border-destructive");
+        const card = screen
+          .queryByText(/API Error: 404/)
+          ?.closest(".border-destructive");
         expect(card).toBeInTheDocument();
       });
     });
@@ -107,8 +127,9 @@ describe("BusStopCard", () => {
       renderWithProviders(<BusStopCard busStopCode="83139" />);
 
       await waitFor(() => {
-        const mapIcon = document.querySelector('[data-lucide="map-pin"]') ||
-                       document.querySelector("svg");
+        const mapIcon =
+          document.querySelector('[data-lucide="map-pin"]') ||
+          document.querySelector("svg");
         expect(mapIcon).toBeInTheDocument();
       });
     });
@@ -139,8 +160,9 @@ describe("BusStopCard", () => {
 
       await waitFor(() => {
         // Clock icons should be present for arrivals
-        const clockIcon = document.querySelector('[data-lucide="clock"]') ||
-                          document.querySelector("svg");
+        const clockIcon =
+          document.querySelector('[data-lucide="clock"]') ||
+          document.querySelector("svg");
         expect(clockIcon).toBeInTheDocument();
       });
     });
@@ -197,7 +219,9 @@ describe("BusStopCard", () => {
     });
 
     test("fetches correct bus stop based on prop", async () => {
-      const { rerender } = renderWithProviders(<BusStopCard busStopCode="83139" />);
+      const { rerender } = renderWithProviders(
+        <BusStopCard busStopCode="83139" />,
+      );
 
       await waitFor(() => {
         expect(screen.getByText("83139")).toBeInTheDocument();
@@ -231,7 +255,9 @@ describe("BusStopCard", () => {
       renderWithProviders(<BusStopCard busStopCode="83139" />);
 
       await waitFor(() => {
-        expect(screen.getByRole("button", { name: /start auto-refresh|auto/i })).toBeInTheDocument();
+        expect(
+          screen.getByRole("button", { name: /start auto-refresh|auto/i }),
+        ).toBeInTheDocument();
       });
     });
 
@@ -241,49 +267,87 @@ describe("BusStopCard", () => {
 
       await waitFor(() => screen.getByText("83139"));
 
-      const button = screen.getByRole("button", { name: /start auto-refresh/i });
+      const button = screen.getByRole("button", {
+        name: /start auto-refresh/i,
+      });
       expect(button).toHaveClass("bg-muted");
 
       await user.click(button);
 
       await waitFor(() => {
-        expect(screen.getByRole("button", { name: /stop auto-refresh/i })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: /stop auto-refresh/i })).toHaveClass("bg-primary");
-        expect(screen.getByRole("button", { name: /stop auto-refresh/i })).toHaveClass("text-primary-foreground");
+        expect(
+          screen.getByRole("button", { name: /stop auto-refresh/i }),
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole("button", { name: /stop auto-refresh/i }),
+        ).toHaveClass("bg-primary");
+        expect(
+          screen.getByRole("button", { name: /stop auto-refresh/i }),
+        ).toHaveClass("text-primary-foreground");
       });
     });
 
     test("clears interval on unmount", async () => {
-      vi.useFakeTimers();
-      const user = userEvent.setup({ delay: null });
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({
+        advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+      });
 
-      const { unmount } = renderWithProviders(<BusStopCard busStopCode="83139" />);
+      const { unmount } = renderWithProviders(
+        <BusStopCard busStopCode="83139" />,
+      );
 
-      await waitFor(() => screen.getByText("83139"));
-      await user.click(screen.getByRole("button", { name: /start auto-refresh/i }));
+      // Wait for initial data fetch to complete
+      await vi.waitFor(() => {
+        expect(screen.getByText("83139")).toBeInTheDocument();
+      });
+
+      await user.click(
+        screen.getByRole("button", { name: /start auto-refresh/i }),
+      );
+
+      // Advance timers to ensure interval is set
+      await act(async () => {
+        vi.advanceTimersByTime(3000);
+      });
 
       const clearIntervalSpy = vi.spyOn(globalThis, "clearInterval");
       unmount();
 
       expect(clearIntervalSpy).toHaveBeenCalled();
-      vi.restoreAllMocks();
+      clearIntervalSpy.mockRestore();
     });
 
     test("restarts interval when bus stop code changes", async () => {
-      vi.useFakeTimers();
-      const user = userEvent.setup({ delay: null });
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({
+        advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+      });
 
-      const { rerender } = renderWithProviders(<BusStopCard busStopCode="83139" />);
+      const { rerender } = renderWithProviders(
+        <BusStopCard busStopCode="83139" />,
+      );
 
-      await waitFor(() => screen.getByText("83139"));
-      await user.click(screen.getByRole("button", { name: /start auto-refresh/i }));
+      // Wait for initial data fetch to complete
+      await vi.waitFor(() => {
+        expect(screen.getByText("83139")).toBeInTheDocument();
+      });
+
+      await user.click(
+        screen.getByRole("button", { name: /start auto-refresh/i }),
+      );
+
+      // Advance timers to ensure interval is set
+      await act(async () => {
+        vi.advanceTimersByTime(3000);
+      });
 
       const clearIntervalSpy = vi.spyOn(globalThis, "clearInterval");
 
       rerender(<BusStopCard busStopCode="83138" />);
 
       expect(clearIntervalSpy).toHaveBeenCalled();
-      vi.restoreAllMocks();
+      clearIntervalSpy.mockRestore();
     });
   });
 });

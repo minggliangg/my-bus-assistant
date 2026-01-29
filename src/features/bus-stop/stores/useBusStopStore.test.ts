@@ -1,30 +1,38 @@
-import { describe, test, expect, beforeEach, afterEach, vi } from "vitest";
-import { renderHook, act, waitFor } from "@testing-library/react";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
+import { act, renderHook } from "@testing-library/react";
 import { server } from "@/mocks/server";
 import useBusStore from "./useBusStopStore";
 
 describe("useBusStopStore", () => {
-  beforeEach(() => {
+  beforeAll(() => {
     server.listen({ onUnhandledRequest: "error" });
-    // Reset zustand state before each test
-    useBusStore.setState({ busStop: null, loading: false, error: null, isAutoRefreshEnabled: false, lastUpdateTimestamp: null });
+  });
+
+  afterAll(() => {
+    server.close();
+  });
+
+  beforeEach(() => {
     vi.useFakeTimers();
-    if (typeof localStorage !== 'undefined') {
-      if (typeof localStorage !== 'undefined') {
-      localStorage.clear();
-    }
-    }
+    localStorage.clear();
+    // Reset zustand state before each test
+    useBusStore.getState().reset();
   });
 
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
-    if (typeof localStorage !== 'undefined') {
-      if (typeof localStorage !== 'undefined') {
-      localStorage.clear();
-    }
-    }
-    server.close();
+    localStorage.clear();
+    server.resetHandlers();
   });
 
   test("has initial state", () => {
@@ -38,16 +46,22 @@ describe("useBusStopStore", () => {
   test("sets loading to true when fetchBusArrivals is called", async () => {
     const { result } = renderHook(() => useBusStore());
 
+    // Start the fetch but don't await it yet
+    let fetchPromise: Promise<void>;
     act(() => {
-      result.current.fetchBusArrivals("83139");
+      fetchPromise = result.current.fetchBusArrivals("83139");
     });
 
+    // Loading should be true immediately after starting
     expect(result.current.loading).toBe(true);
     expect(result.current.error).toBeNull();
 
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
+    // Now await the fetch to complete
+    await act(async () => {
+      await fetchPromise;
     });
+
+    expect(result.current.loading).toBe(false);
   });
 
   test("fetches bus arrivals successfully", async () => {
@@ -366,29 +380,43 @@ describe("useBusStopStore", () => {
 
     test("prevents overlapping fetches", async () => {
       const { result } = renderHook(() => useBusStore());
+      const now = Date.now();
+      vi.setSystemTime(now);
 
       // Spy on fetch to track calls
       const fetchSpy = vi.spyOn(globalThis, "fetch");
 
-      // Start first fetch
-      const firstPromise = act(async () => {
-        return result.current.fetchBusArrivals("83139");
+      // Start first fetch but don't await - simulates in-progress state
+      let firstPromise: Promise<void>;
+      act(() => {
+        firstPromise = result.current.fetchBusArrivals("83139");
       });
 
-      // Try to start second fetch immediately - should be skipped
-      await act(async () => {
+      // Verify we're in fetching state
+      expect(result.current.isFetching).toBe(true);
+
+      // Try to start second fetch while first is in progress - should be skipped
+      act(() => {
         result.current.fetchBusArrivals("83139");
       });
 
-      // Fetch should only be called once
+      // Fetch should only be called once (second call skipped due to isFetching)
       expect(fetchSpy).toHaveBeenCalledTimes(1);
 
       // Wait for first fetch to complete
-      await firstPromise;
-
-      // Now second fetch should work
       await act(async () => {
-        result.current.fetchBusArrivals("83139");
+        await firstPromise;
+      });
+
+      // Verify fetching is complete
+      expect(result.current.isFetching).toBe(false);
+
+      // Advance time past the throttle window
+      vi.setSystemTime(now + 50000);
+
+      // Now another fetch should work (past throttle window)
+      await act(async () => {
+        await result.current.fetchBusArrivals("83139");
       });
 
       // Fetch should be called twice now

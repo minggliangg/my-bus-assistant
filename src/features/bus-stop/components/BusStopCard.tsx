@@ -21,7 +21,7 @@ import {
   getArrivalInMinutes,
   type BusService,
 } from "../models/bus-stop-models";
-import useBusStore from "../stores/useBusStopStore";
+import useBusStore, { type ChangedField } from "../stores/useBusStopStore";
 
 interface BusStopCardProps {
   busStopCode: string;
@@ -36,6 +36,7 @@ export function BusStopCard({ busStopCode }: BusStopCardProps) {
     isAutoRefreshEnabled,
     isFetching,
     toggleAutoRefresh,
+    changedFields,
   } = useBusStore();
 
   useEffect(() => {
@@ -57,9 +58,15 @@ export function BusStopCard({ busStopCode }: BusStopCardProps) {
     }, AUTO_REFRESH_INTERVAL_MS); // Add a small buffer to avoid throttling drift
 
     return () => clearInterval(intervalId);
-  }, [isAutoRefreshEnabled, busStopCode, fetchBusArrivals, AUTO_REFRESH_INTERVAL_MS]);
+  }, [
+    isAutoRefreshEnabled,
+    busStopCode,
+    fetchBusArrivals,
+    AUTO_REFRESH_INTERVAL_MS,
+  ]);
 
-  if (loading) {
+  // Only show loading spinner for initial load (no existing data)
+  if (loading && !busStop) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-12">
@@ -133,7 +140,11 @@ export function BusStopCard({ busStopCode }: BusStopCardProps) {
               <PlayCircle className="h-4 w-4" />
             )}
             <span className="text-sm font-medium">
-              {isFetching ? "Refreshing..." : isAutoRefreshEnabled ? "Stop" : "Auto"}
+              {isFetching
+                ? "Refreshing..."
+                : isAutoRefreshEnabled
+                  ? "Stop"
+                  : "Auto"}
             </span>
           </button>
         </CardAction>
@@ -146,7 +157,11 @@ export function BusStopCard({ busStopCode }: BusStopCardProps) {
           </p>
         ) : (
           busStop.services.map((service) => (
-            <BusServiceRow key={service.serviceNo} service={service} />
+            <BusServiceRow
+              key={service.serviceNo}
+              service={service}
+              changedFields={changedFields}
+            />
           ))
         )}
       </CardContent>
@@ -154,9 +169,20 @@ export function BusStopCard({ busStopCode }: BusStopCardProps) {
   );
 }
 
-const BusServiceRow = ({ service }: { service: BusService }) => {
+const BusServiceRow = ({
+  service,
+  changedFields,
+}: {
+  service: BusService;
+  changedFields: ChangedField[];
+}) => {
   const arrivals = [service.nextBus, service.nextBus2, service.nextBus3].filter(
     Boolean,
+  );
+
+  // Check if this service's arrival times have changed
+  const hasChanges = changedFields.some(
+    (field) => field.serviceNo === service.serviceNo,
   );
 
   return (
@@ -167,6 +193,14 @@ const BusServiceRow = ({ service }: { service: BusService }) => {
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
             <span className="text-sm font-bold">{service.serviceNo}</span>
           </div>
+          {hasChanges && (
+            <div className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-1">
+              <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-xs text-green-700 font-medium">
+                Updated
+              </span>
+            </div>
+          )}
           <span className="text-xs text-muted-foreground">
             {service.operator}
           </span>
@@ -181,6 +215,13 @@ const BusServiceRow = ({ service }: { service: BusService }) => {
           {arrivals.map((arrival, index) => {
             if (!arrival) return null;
 
+            // Check if this specific bus arrival has changed
+            const isChanged = changedFields.some(
+              (field) =>
+                field.serviceNo === service.serviceNo &&
+                field.busIndex === index,
+            );
+
             const minutes = getArrivalInMinutes(arrival);
             const isArriving = minutes <= 1;
 
@@ -189,11 +230,15 @@ const BusServiceRow = ({ service }: { service: BusService }) => {
                 <div className="flex items-center gap-2 min-w-0">
                   <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <span
-                    className={
-                      isArriving
-                        ? "font-semibold text-primary truncate"
-                        : "text-foreground truncate"
-                    }
+                    className={cn(
+                      "arrival-time transition-colors duration-2000 ease-out",
+                      {
+                        "text-green-600": isChanged,
+                        "font-semibold": isChanged,
+                        "font-semibold text-primary": isArriving && !isChanged,
+                        "text-foreground": !isArriving && !isChanged,
+                      },
+                    )}
                   >
                     {formatArrivalTime(arrival)}
                   </span>
