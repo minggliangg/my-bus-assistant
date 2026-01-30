@@ -1,18 +1,19 @@
 import {
   Card,
-  CardAction,
   CardContent,
+  CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import {
-  ArrowUpDown,
-  Bus,
-  Clock,
-  Loader2,
-  MapPin,
-  Users,
-} from "lucide-react";
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { FavoriteToggleButton } from "@/features/favorites";
+import { cn } from "@/lib/utils";
+import { ArrowUpDown, Bus, Clock, Loader2, MapPin, Users } from "lucide-react";
 import { useEffect } from "react";
 import {
   formatArrivalTime,
@@ -48,16 +49,18 @@ export const BusStopArrivalCard = ({
   if (!busStopCode) {
     return (
       <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12 gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-            <MapPin className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <div className="text-center space-y-1">
-            <h3 className="font-semibold text-lg">No bus stop selected</h3>
-            <p className="text-sm text-muted-foreground">
-              Search and select a bus stop to view arrival times
-            </p>
-          </div>
+        <CardContent className="py-12">
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <MapPin />
+              </EmptyMedia>
+              <EmptyTitle>No bus stop selected</EmptyTitle>
+              <EmptyDescription>
+                Search and select a bus stop to view arrival times
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         </CardContent>
       </Card>
     );
@@ -99,12 +102,12 @@ export const BusStopArrivalCard = ({
   return (
     <Card>
       <CardHeader className="pb-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-          <div className="flex items-center gap-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 flex-1">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
               <MapPin className="h-6 w-6 text-primary" />
             </div>
-            <div>
+            <div className="flex-1">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Bus Stop
               </p>
@@ -113,26 +116,15 @@ export const BusStopArrivalCard = ({
               </h3>
             </div>
           </div>
-          {isStale && !isFetching && (
-            <CardAction>
-              <div className="flex h-9 items-center gap-2 rounded-lg bg-amber-100 dark:bg-amber-900/30 px-3 text-amber-700 dark:text-amber-400">
-                <Clock className="h-4 w-4" />
-                <span className="text-xs font-medium">Cached</span>
-              </div>
-            </CardAction>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3 sm:flex-col sm:items-end sm:gap-1">
-          <div className="flex h-9 items-center rounded-lg bg-muted px-3">
-            <Bus className="h-4 w-4 text-muted-foreground mr-2" />
-            <span className="text-sm font-semibold">
-              {busStop.services.length}
-            </span>
+          <div className="flex items-center gap-2">
+            <FavoriteToggleButton busStopCode={busStop.busStopCode} />
+            <div className="flex h-9 items-center rounded-lg bg-muted px-3">
+              <Bus className="h-4 w-4 text-muted-foreground mr-2" />
+              <span className="text-sm font-semibold">
+                {busStop.services.length}
+              </span>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground whitespace-nowrap">
-            {busStop.services.length === 1 ? "service" : "services"}
-          </p>
         </div>
       </CardHeader>
 
@@ -151,6 +143,15 @@ export const BusStopArrivalCard = ({
           ))
         )}
       </CardContent>
+
+      {isStale && !isFetching && (
+        <CardFooter className="pt-0">
+          <div className="flex w-full items-center justify-end gap-2 border-t pt-4 text-amber-700 dark:text-amber-400">
+            <Clock className="h-4 w-4" />
+            <span className="text-xs font-medium">Cached data shown</span>
+          </div>
+        </CardFooter>
+      )}
     </Card>
   );
 };

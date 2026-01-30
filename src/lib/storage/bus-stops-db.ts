@@ -14,10 +14,21 @@ interface BusStopsDB extends DBSchema {
     key: string;
     value: { lastUpdateTimestamp: number };
   };
+  favorites: {
+    key: string;
+    value: {
+      busStopCode: string;
+      timestamp: number;
+      order: number;
+    };
+    indexes: {
+      "by-timestamp": number;
+    };
+  };
 }
 
 const DB_NAME = "my-bus-assistant";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const BUS_STOPS_STORE = "busStops";
 const METADATA_STORE = "metadata";
 const LAST_UPDATE_KEY = "bus-stops-last-update";
@@ -41,6 +52,13 @@ const openDatabase = async (): Promise<IDBPDatabase<BusStopsDB>> => {
 
       if (!db.objectStoreNames.contains(METADATA_STORE)) {
         db.createObjectStore(METADATA_STORE);
+      }
+
+      if (!db.objectStoreNames.contains("favorites")) {
+        const favoritesStore = db.createObjectStore("favorites", {
+          keyPath: "busStopCode",
+        });
+        favoritesStore.createIndex("by-timestamp", "timestamp");
       }
     },
   });

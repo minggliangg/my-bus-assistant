@@ -1,6 +1,5 @@
 import { server } from "@/mocks/server";
 import { act, render, screen, waitFor } from "@testing-library/react";
-import { userEvent } from "@testing-library/user-event";
 import {
   afterAll,
   afterEach,
@@ -104,7 +103,6 @@ describe("BusStopCard", () => {
 
       await waitFor(() => {
         expect(screen.getByText("1")).toBeInTheDocument();
-        expect(screen.getByText("service")).toBeInTheDocument();
       });
     });
 
@@ -113,7 +111,6 @@ describe("BusStopCard", () => {
 
       await waitFor(() => {
         expect(screen.getByText("2")).toBeInTheDocument();
-        expect(screen.getByText("services")).toBeInTheDocument();
       });
     });
 
@@ -251,7 +248,6 @@ describe("BusStopCard", () => {
     });
   });
 
-
   // localStorage persistence
   describe("localStorage persistence", () => {
     test("displays cached data immediately with stale indicator", async () => {
@@ -278,7 +274,10 @@ describe("BusStopCard", () => {
           },
         ],
       };
-      localStorage.setItem("bus-stop-data-83139", JSON.stringify(mockCachedData));
+      localStorage.setItem(
+        "bus-stop-data-83139",
+        JSON.stringify(mockCachedData),
+      );
 
       renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 

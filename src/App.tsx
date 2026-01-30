@@ -3,12 +3,14 @@ import "./App.css";
 import { BusStopArrivalCard, AutoRefreshControl } from "./features/bus-arrivals/components";
 import { BusStopSearchComboBox } from "./features/search-bar";
 import { useBusStopsStore } from "./features/search-bar/stores";
+import { FavoriteBusStops, useFavoritesStore } from "./features/favorites";
 
 const App = () => {
   const [selectedBusStopCode, setSelectedBusStopCode] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     useBusStopsStore.getState().fetchBusStops();
+    useFavoritesStore.getState().loadFavorites();
   }, []);
 
   const handleBusStopSelect = (code: string | undefined) => {
@@ -34,6 +36,11 @@ const App = () => {
           </div>
           <AutoRefreshControl busStopCode={selectedBusStopCode} />
         </div>
+
+        <FavoriteBusStops
+          selectedBusStopCode={selectedBusStopCode}
+          onBusStopSelect={handleBusStopSelect}
+        />
 
         <BusStopArrivalCard busStopCode={selectedBusStopCode} />
       </div>
