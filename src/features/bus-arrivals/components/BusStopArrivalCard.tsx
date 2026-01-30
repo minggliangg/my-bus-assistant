@@ -24,7 +24,7 @@ import {
 import useBusStore, { type ChangedField } from "../stores/useBusStopStore";
 
 interface BusStopArrivalCardProps {
-  busStopCode: string;
+  busStopCode: string | undefined;
 }
 
 export const BusStopArrivalCard = ({
@@ -43,7 +43,9 @@ export const BusStopArrivalCard = ({
   } = useBusStore();
 
   useEffect(() => {
-    fetchBusArrivals(busStopCode);
+    if (busStopCode) {
+      fetchBusArrivals(busStopCode);
+    }
   }, [busStopCode, fetchBusArrivals]);
 
   const THROTTLE_INTERVAL_MS = parseInt(
@@ -57,7 +59,9 @@ export const BusStopArrivalCard = ({
     if (!isAutoRefreshEnabled) return;
 
     const intervalId = setInterval(() => {
-      fetchBusArrivals(busStopCode);
+      if (busStopCode) {
+        fetchBusArrivals(busStopCode);
+      }
     }, AUTO_REFRESH_INTERVAL_MS); // Add a small buffer to avoid throttling drift
 
     return () => clearInterval(intervalId);
@@ -67,6 +71,25 @@ export const BusStopArrivalCard = ({
     fetchBusArrivals,
     AUTO_REFRESH_INTERVAL_MS,
   ]);
+
+  // Show empty state when no bus stop is selected
+  if (!busStopCode) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-12 gap-4">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+            <MapPin className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <div className="text-center space-y-1">
+            <h3 className="font-semibold text-lg">No bus stop selected</h3>
+            <p className="text-sm text-muted-foreground">
+              Search and select a bus stop to view arrival times
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Only show loading spinner for initial load (no existing data)
   if (loading && !busStop) {

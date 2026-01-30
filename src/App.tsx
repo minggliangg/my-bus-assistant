@@ -5,18 +5,18 @@ import { BusStopSearchComboBox } from "./features/search-bar";
 import { useBusStopsStore } from "./features/search-bar/stores";
 
 const App = () => {
-  const [selectedBusStopCode, setSelectedBusStopCode] = useState<string>("55281");
+  const [selectedBusStopCode, setSelectedBusStopCode] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     useBusStopsStore.getState().fetchBusStops();
   }, []);
 
-  const handleBusStopSelect = (code: string) => {
+  const handleBusStopSelect = (code: string | undefined) => {
     setSelectedBusStopCode(code);
   };
 
   return (
-    <div className="min-h-screen min-w-[375px] bg-background p-4 sm:p-6">
+    <div className="min-h-screen bg-background p-4 sm:p-6">
       <div className="mx-auto max-w-2xl space-y-6">
         <header className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">My Bus Assistant</h1>

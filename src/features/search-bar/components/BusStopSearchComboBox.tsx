@@ -12,12 +12,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ChevronsUpDown, Loader2, MapPin } from "lucide-react";
+import { X, Loader2, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useBusStopsStore } from "../stores";
 
 interface BusStopSearchComboBoxProps {
-  onBusStopSelect: (busStopCode: string) => void;
+  onBusStopSelect: (busStopCode: string | undefined) => void;
   defaultValue?: string;
   className?: string;
 }
@@ -89,11 +89,24 @@ export const BusStopSearchComboBox = ({
           {selectedStop
             ? `${selectedStop.busStopCode} - ${selectedStop.description}`
             : "Search bus stops..."}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          {selectedStop && (
+            <X
+              className="ml-2 h-4 w-4 shrink-0 opacity-50 hover:opacity-100 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                onBusStopSelect(undefined);
+                setSearchQuery("");
+              }}
+            />
+          )}
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-full p-0" align="start">
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] sm:w-[350px] md:w-[400px] p-0"
+        align="start"
+        sideOffset={4}
+      >
         <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search by stop number or street..."
