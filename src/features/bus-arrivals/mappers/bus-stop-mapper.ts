@@ -1,7 +1,7 @@
 import type {
+  BusArrivalDTO,
   BusDTO,
   BusServiceDTO,
-  BusStopDTO,
 } from "../dtos/bus-arrival-dto";
 import type {
   BusArrival,
@@ -37,7 +37,7 @@ const mapBusService = (dto: BusServiceDTO): BusService => ({
   nextBus3: mapBusArrival(dto.NextBus3),
 });
 
-export const mapBusStopDtoToModel = (dto: BusStopDTO): BusStop => ({
+export const mapBusStopDtoToModel = (dto: BusArrivalDTO): BusStop => ({
   busStopCode: dto.BusStopCode,
   services: dto.Services.map(mapBusService),
 });

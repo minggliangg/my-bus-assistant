@@ -19,7 +19,7 @@ export type BusServiceDTO = {
   NextBus3: BusDTO;
 };
 
-export type BusStopDTO = {
+export type BusArrivalDTO = {
   "odata.metadata"?: string;
   BusStopCode: string;
   Services: BusServiceDTO[];

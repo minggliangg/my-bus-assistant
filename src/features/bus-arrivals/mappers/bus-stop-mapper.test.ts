@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { BusStopDTO } from "../dtos/bus-arrival-dto";
+import type { BusArrivalDTO } from "../dtos/bus-arrival-dto";
 import { EMPTY_BUS_DTO } from "../dtos/bus-arrival-dto";
 import type { BusArrival, BusService } from "../models/bus-arrivals-model";
 import { mapBusStopDtoToModel } from "./bus-stop-mapper";
@@ -30,7 +30,7 @@ describe("mapBusStopDtoToModel", () => {
 
   test("maps all fields correctly", () => {
     const serviceDTO = createMockServiceDTO();
-    const dto: BusStopDTO = {
+    const dto: BusArrivalDTO = {
       BusStopCode: "83139",
       Services: [serviceDTO],
     };
@@ -63,7 +63,7 @@ describe("mapBusStopDtoToModel", () => {
       NextBus2: EMPTY_BUS_DTO,
       NextBus3: EMPTY_BUS_DTO,
     });
-    const dto: BusStopDTO = {
+    const dto: BusArrivalDTO = {
       BusStopCode: "83139",
       Services: [serviceDTO],
     };
@@ -79,7 +79,7 @@ describe("mapBusStopDtoToModel", () => {
   });
 
   test("handles empty services array (no buses scenario)", () => {
-    const dto: BusStopDTO = {
+    const dto: BusArrivalDTO = {
       BusStopCode: "98291",
       Services: [],
     };
@@ -95,7 +95,7 @@ describe("mapBusStopDtoToModel", () => {
     const testDate = "2025-01-15T10:30:00.000Z";
     const busDTO = createMockBusDTO({ EstimatedArrival: testDate });
     const serviceDTO = createMockServiceDTO({ NextBus: busDTO });
-    const dto: BusStopDTO = {
+    const dto: BusArrivalDTO = {
       BusStopCode: "83139",
       Services: [serviceDTO],
     };
@@ -111,7 +111,7 @@ describe("mapBusStopDtoToModel", () => {
   test("handles bus with empty EstimatedArrival", () => {
     const busDTO = createMockBusDTO({ EstimatedArrival: "" });
     const serviceDTO = createMockServiceDTO({ NextBus: busDTO });
-    const dto: BusStopDTO = {
+    const dto: BusArrivalDTO = {
       BusStopCode: "83139",
       Services: [serviceDTO],
     };
@@ -126,10 +126,12 @@ describe("mapBusStopDtoToModel", () => {
     const serviceDTO = createMockServiceDTO({
       ServiceNo: "66",
       NextBus: createMockBusDTO(),
-      NextBus2: createMockBusDTO({ EstimatedArrival: new Date(Date.now() + 10 * 60000).toISOString() }),
+      NextBus2: createMockBusDTO({
+        EstimatedArrival: new Date(Date.now() + 10 * 60000).toISOString(),
+      }),
       NextBus3: EMPTY_BUS_DTO,
     });
-    const dto: BusStopDTO = {
+    const dto: BusArrivalDTO = {
       BusStopCode: "83139",
       Services: [serviceDTO],
     };
@@ -144,7 +146,7 @@ describe("mapBusStopDtoToModel", () => {
   });
 
   test("handles multiple services", () => {
-    const dto: BusStopDTO = {
+    const dto: BusArrivalDTO = {
       BusStopCode: "83139",
       Services: [
         createMockServiceDTO({ ServiceNo: "15", Operator: "SBST" }),
@@ -171,7 +173,7 @@ describe("mapBusStopDtoToModel", () => {
       Type: undefined,
     });
     const serviceDTO = createMockServiceDTO({ NextBus: busDTO });
-    const dto: BusStopDTO = {
+    const dto: BusArrivalDTO = {
       BusStopCode: "83139",
       Services: [serviceDTO],
     };
@@ -191,7 +193,7 @@ describe("mapBusStopDtoToModel", () => {
       Longitude: "103.900000",
     });
     const serviceDTO = createMockServiceDTO({ NextBus: busDTO });
-    const dto: BusStopDTO = {
+    const dto: BusArrivalDTO = {
       BusStopCode: "83139",
       Services: [serviceDTO],
     };
@@ -210,7 +212,7 @@ describe("mapBusStopDtoToModel", () => {
       Longitude: "invalid",
     });
     const serviceDTO = createMockServiceDTO({ NextBus: busDTO });
-    const dto: BusStopDTO = {
+    const dto: BusArrivalDTO = {
       BusStopCode: "83139",
       Services: [serviceDTO],
     };
@@ -226,7 +228,7 @@ describe("mapBusStopDtoToModel", () => {
   test("parses VisitNumber correctly", () => {
     const busDTO = createMockBusDTO({ VisitNumber: "5" });
     const serviceDTO = createMockServiceDTO({ NextBus: busDTO });
-    const dto: BusStopDTO = {
+    const dto: BusArrivalDTO = {
       BusStopCode: "83139",
       Services: [serviceDTO],
     };
@@ -241,7 +243,7 @@ describe("mapBusStopDtoToModel", () => {
   test("handles invalid VisitNumber with fallback to 0", () => {
     const busDTO = createMockBusDTO({ VisitNumber: "invalid" });
     const serviceDTO = createMockServiceDTO({ NextBus: busDTO });
-    const dto: BusStopDTO = {
+    const dto: BusArrivalDTO = {
       BusStopCode: "83139",
       Services: [serviceDTO],
     };
@@ -255,7 +257,7 @@ describe("mapBusStopDtoToModel", () => {
 
   test("handles API response with empty Services array (no more buses)", () => {
     // This simulates the real API response when there are no buses
-    const dto: BusStopDTO = {
+    const dto: BusArrivalDTO = {
       "odata.metadata":
         "https://datamall2.mytransport.sg/ltaodataservice/v3/BusArrival",
       BusStopCode: "98291",
@@ -270,29 +272,41 @@ describe("mapBusStopDtoToModel", () => {
   });
 
   test("handles multiple services with varying bus counts", () => {
-    const dto: BusStopDTO = {
+    const dto: BusArrivalDTO = {
       BusStopCode: "83139",
       Services: [
         // Service with only 1 bus
         createMockServiceDTO({
           ServiceNo: "15",
-          NextBus: createMockBusDTO({ EstimatedArrival: new Date(Date.now() + 2 * 60000).toISOString() }),
+          NextBus: createMockBusDTO({
+            EstimatedArrival: new Date(Date.now() + 2 * 60000).toISOString(),
+          }),
           NextBus2: EMPTY_BUS_DTO,
           NextBus3: EMPTY_BUS_DTO,
         }),
         // Service with 2 buses
         createMockServiceDTO({
           ServiceNo: "66",
-          NextBus: createMockBusDTO({ EstimatedArrival: new Date(Date.now() + 1 * 60000).toISOString() }),
-          NextBus2: createMockBusDTO({ EstimatedArrival: new Date(Date.now() + 8 * 60000).toISOString() }),
+          NextBus: createMockBusDTO({
+            EstimatedArrival: new Date(Date.now() + 1 * 60000).toISOString(),
+          }),
+          NextBus2: createMockBusDTO({
+            EstimatedArrival: new Date(Date.now() + 8 * 60000).toISOString(),
+          }),
           NextBus3: EMPTY_BUS_DTO,
         }),
         // Service with all 3 buses
         createMockServiceDTO({
           ServiceNo: "170",
-          NextBus: createMockBusDTO({ EstimatedArrival: new Date(Date.now() + 3 * 60000).toISOString() }),
-          NextBus2: createMockBusDTO({ EstimatedArrival: new Date(Date.now() + 15 * 60000).toISOString() }),
-          NextBus3: createMockBusDTO({ EstimatedArrival: new Date(Date.now() + 25 * 60000).toISOString() }),
+          NextBus: createMockBusDTO({
+            EstimatedArrival: new Date(Date.now() + 3 * 60000).toISOString(),
+          }),
+          NextBus2: createMockBusDTO({
+            EstimatedArrival: new Date(Date.now() + 15 * 60000).toISOString(),
+          }),
+          NextBus3: createMockBusDTO({
+            EstimatedArrival: new Date(Date.now() + 25 * 60000).toISOString(),
+          }),
         }),
       ],
     };

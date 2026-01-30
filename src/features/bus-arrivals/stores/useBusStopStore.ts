@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { type BusStopDTO } from "../dtos/bus-arrival-dto";
+import { type BusArrivalDTO } from "../dtos/bus-arrival-dto";
 import { mapBusStopDtoToModel } from "../mappers/bus-stop-mapper";
 import {
   formatArrivalTime,
@@ -218,7 +218,7 @@ const useBusStore = create<BusStopStore>((set, get) => {
           throw new Error(`API Error: ${response.status}`);
         }
 
-        const dto: BusStopDTO = await response.json();
+        const dto: BusArrivalDTO = await response.json();
         const busStop = mapBusStopDtoToModel(dto);
         const now = Date.now();
 

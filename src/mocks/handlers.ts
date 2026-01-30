@@ -1,9 +1,9 @@
 import { http, HttpResponse } from "msw";
-import type { BusStopDTO } from "../features/bus-arrivals/dtos/bus-arrival-dto";
+import type { BusArrivalDTO } from "../features/bus-arrivals/dtos/bus-arrival-dto";
 import { EMPTY_BUS_DTO } from "../features/bus-arrivals/dtos/bus-arrival-dto";
 
 // Mock API response for bus arrivals
-export const mockBusArrivalResponse: BusStopDTO = {
+export const mockBusArrivalResponse: BusArrivalDTO = {
   BusStopCode: "83139",
   Services: [
     {
@@ -81,8 +81,8 @@ export const mockBusArrivalResponse: BusStopDTO = {
 // Create a mock response generator that sets the BusStopCode dynamically
 function createMockResponse(
   busStopCode: string,
-  services: BusStopDTO["Services"],
-): BusStopDTO {
+  services: BusArrivalDTO["Services"],
+): BusArrivalDTO {
   return {
     BusStopCode: busStopCode,
     Services: services,
@@ -90,7 +90,7 @@ function createMockResponse(
 }
 
 // Mock API response for bus arrivals
-function getMockBusArrivalResponse(busStopCode: string): BusStopDTO {
+function getMockBusArrivalResponse(busStopCode: string): BusArrivalDTO {
   return createMockResponse(busStopCode, [
     {
       ServiceNo: "15",
@@ -165,7 +165,7 @@ function getMockBusArrivalResponse(busStopCode: string): BusStopDTO {
 }
 
 // Mock API response for arriving now (≤1 min)
-function getMockBusArrivingNowResponse(busStopCode: string): BusStopDTO {
+function getMockBusArrivingNowResponse(busStopCode: string): BusArrivalDTO {
   return createMockResponse(busStopCode, [
     {
       ServiceNo: "15",
@@ -189,7 +189,7 @@ function getMockBusArrivingNowResponse(busStopCode: string): BusStopDTO {
 }
 
 // Mock API response for empty services
-function getMockEmptyServicesResponse(busStopCode: string): BusStopDTO {
+function getMockEmptyServicesResponse(busStopCode: string): BusArrivalDTO {
   return createMockResponse(busStopCode, []);
 }
 
