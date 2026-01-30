@@ -1,12 +1,19 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 import { BusStopArrivalCard } from "./features/bus-arrivals/components/BusStopArrivalCard";
+import { BusStopSearchComboBox } from "./features/search-bar";
 import { useBusStopsStore } from "./features/search-bar/stores";
 
 const App = () => {
+  const [selectedBusStopCode, setSelectedBusStopCode] = useState<string>("55281");
+
   useEffect(() => {
     useBusStopsStore.getState().fetchBusStops();
   }, []);
+
+  const handleBusStopSelect = (code: string) => {
+    setSelectedBusStopCode(code);
+  };
 
   return (
     <div className="min-h-screen min-w-[375px] bg-background p-4 sm:p-6">
@@ -18,7 +25,12 @@ const App = () => {
           </p>
         </header>
 
-        <BusStopArrivalCard busStopCode="55281" />
+        <BusStopSearchComboBox
+          onBusStopSelect={handleBusStopSelect}
+          defaultValue={selectedBusStopCode}
+        />
+
+        <BusStopArrivalCard busStopCode={selectedBusStopCode} />
       </div>
     </div>
   );

@@ -38,6 +38,16 @@ if (typeof globalThis !== "undefined") {
     value: localStorageMock,
     writable: true,
   });
+
+  // Setup ResizeObserver mock (needed by cmdk component)
+  globalThis.ResizeObserver = class ResizeObserver {
+    observe = vi.fn();
+    unobserve = vi.fn();
+    disconnect = vi.fn();
+  };
+
+  // Setup Element.scrollIntoView mock (needed by cmdk component)
+  Element.prototype.scrollIntoView = vi.fn();
 }
 
 // Extend Vitest's expect with jest-dom matchers

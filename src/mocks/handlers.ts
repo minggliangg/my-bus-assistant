@@ -80,19 +80,17 @@ export const mockBusArrivalResponse: BusArrivalDTO = {
 };
 
 // Create a mock response generator that sets the BusStopCode dynamically
-function createMockResponse(
+const createMockResponse = (
   busStopCode: string,
   services: BusArrivalDTO["Services"],
-): BusArrivalDTO {
-  return {
-    BusStopCode: busStopCode,
-    Services: services,
-  };
-}
+): BusArrivalDTO => ({
+  BusStopCode: busStopCode,
+  Services: services,
+});
 
 // Mock API response for bus arrivals
-function getMockBusArrivalResponse(busStopCode: string): BusArrivalDTO {
-  return createMockResponse(busStopCode, [
+const getMockBusArrivalResponse = (busStopCode: string): BusArrivalDTO =>
+  createMockResponse(busStopCode, [
     {
       ServiceNo: "15",
       Operator: "SBST",
@@ -163,11 +161,10 @@ function getMockBusArrivalResponse(busStopCode: string): BusArrivalDTO {
       NextBus3: EMPTY_BUS_DTO,
     },
   ]);
-}
 
 // Mock API response for arriving now (≤1 min)
-function getMockBusArrivingNowResponse(busStopCode: string): BusArrivalDTO {
-  return createMockResponse(busStopCode, [
+const getMockBusArrivingNowResponse = (busStopCode: string): BusArrivalDTO =>
+  createMockResponse(busStopCode, [
     {
       ServiceNo: "15",
       Operator: "SBST",
@@ -187,12 +184,10 @@ function getMockBusArrivingNowResponse(busStopCode: string): BusArrivalDTO {
       NextBus3: EMPTY_BUS_DTO,
     },
   ]);
-}
 
 // Mock API response for empty services
-function getMockEmptyServicesResponse(busStopCode: string): BusArrivalDTO {
-  return createMockResponse(busStopCode, []);
-}
+const getMockEmptyServicesResponse = (busStopCode: string): BusArrivalDTO =>
+  createMockResponse(busStopCode, []);
 
 // Mock API response for API error
 export const mockErrorResponse = {
@@ -208,7 +203,7 @@ export const mockBusStopsResponse: BusStopsDTO = {
       RoadName: "Opp Tg Katong Sec Sch",
       Description: "Tg Katong Sec Sch",
       Latitude: 1.316748,
-      Longitude: 103.900000,
+      Longitude: 103.9,
     },
     {
       BusStopCode: "55281",

@@ -148,10 +148,18 @@ const useBusStopsStore = create<BusStopsStore>((set, get) => {
 
     searchBusStops: (query: string) => {
       const { busStops } = get();
-      const lowerQuery = query.toLowerCase();
-      return busStops.filter((stop) =>
-        stop.description.toLowerCase().includes(lowerQuery),
-      );
+      if (!query.trim()) return busStops.slice(0, 10);
+
+      const lowerQuery = query.toLowerCase().trim();
+
+      return busStops
+        .filter((stop) => {
+          const matchesCode = stop.busStopCode.toLowerCase().includes(lowerQuery);
+          const matchesDescription = stop.description.toLowerCase().includes(lowerQuery);
+          const matchesRoadName = stop.roadName.toLowerCase().includes(lowerQuery);
+          return matchesCode || matchesDescription || matchesRoadName;
+        })
+        .slice(0, 10);
     },
 
     getBusStopByCode: (code: string) => {
