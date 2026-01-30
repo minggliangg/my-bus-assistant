@@ -78,35 +78,26 @@ export const BusStopSearchComboBox = ({
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={`w-full justify-between ${className ?? ""}`}
-        >
-          {selectedStop
-            ? `${selectedStop.busStopCode} - ${selectedStop.description}`
-            : "Search bus stops..."}
-          {selectedStop && (
-            <X
-              className="ml-2 h-4 w-4 shrink-0 opacity-50 hover:opacity-100 cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                onBusStopSelect(undefined);
-                setSearchQuery("");
-              }}
-            />
-          )}
-        </Button>
-      </PopoverTrigger>
+    <div className="relative w-full">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={`w-full justify-between ${className ?? ""} ${selectedStop ? "pr-10" : ""}`}
+          >
+            {selectedStop
+              ? `${selectedStop.busStopCode} - ${selectedStop.description}`
+              : "Search bus stops..."}
+          </Button>
+        </PopoverTrigger>
 
-      <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] sm:w-[350px] md:w-[400px] p-0"
-        align="start"
-        sideOffset={4}
-      >
+        <PopoverContent
+          className="w-[var(--radix-popover-trigger-width)] sm:w-[350px] md:w-[400px] p-0"
+          align="start"
+          sideOffset={4}
+        >
         <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search by stop number or street..."
@@ -173,9 +164,26 @@ export const BusStopSearchComboBox = ({
                 ))}
               </CommandGroup>
             )}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+      {selectedStop && (
+        <button
+          type="button"
+          className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-sm hover:bg-muted/50 transition-colors z-10"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onBusStopSelect(undefined);
+            setSearchQuery("");
+          }}
+          aria-label="Clear selection"
+        >
+          <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+        </button>
+      )}
+    </div>
   );
 };

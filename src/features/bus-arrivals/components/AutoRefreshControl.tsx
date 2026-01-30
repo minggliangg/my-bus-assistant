@@ -46,7 +46,7 @@ export const AutoRefreshControl = ({
       onClick={toggleAutoRefresh}
       disabled={isFetching || !busStopCode}
       className={cn(
-        "flex h-10 items-center gap-2 rounded-lg px-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0",
+        "relative flex h-10 items-center gap-2 rounded-lg px-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0",
         isAutoRefreshEnabled
           ? "bg-primary text-primary-foreground hover:bg-primary/90"
           : "bg-muted text-muted-foreground hover:bg-muted/80",
@@ -54,6 +54,7 @@ export const AutoRefreshControl = ({
       aria-label={
         isAutoRefreshEnabled ? "Stop auto-refresh" : "Start auto-refresh"
       }
+      aria-busy={isFetching}
     >
       {isFetching ? (
         <Loader2 className="h-4 w-4 animate-spin" />
@@ -63,12 +64,12 @@ export const AutoRefreshControl = ({
         <PlayCircle className="h-4 w-4" />
       )}
       <span className="text-sm font-medium">
-        {isFetching
-          ? "Refreshing..."
-          : isAutoRefreshEnabled
-            ? "Stop"
-            : "Auto"}
+        {isAutoRefreshEnabled ? "Stop" : "Auto"}
       </span>
+
+      {isFetching && (
+        <span className="sr-only">Refreshing...</span>
+      )}
     </button>
   );
 };

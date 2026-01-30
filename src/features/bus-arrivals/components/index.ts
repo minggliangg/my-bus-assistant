@@ -1,2 +1,2 @@
-export * from "./AutoRefreshControl";
-export * from "./BusStopArrivalCard";
+export { BusStopArrivalCard } from "./BusStopArrivalCard";
+export { AutoRefreshControl } from "./AutoRefreshControl";

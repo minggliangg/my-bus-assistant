@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import "./App.css";
-import { BusStopArrivalCard } from "./features/bus-arrivals/components/BusStopArrivalCard";
-import { AutoRefreshControl } from "./features/bus-arrivals/components/AutoRefreshControl";
+import { BusStopArrivalCard, AutoRefreshControl } from "./features/bus-arrivals/components";
 import { BusStopSearchComboBox } from "./features/search-bar";
 import { useBusStopsStore } from "./features/search-bar/stores";
 
