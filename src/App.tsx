@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 import { BusStopArrivalCard } from "./features/bus-arrivals/components/BusStopArrivalCard";
+import { AutoRefreshControl } from "./features/bus-arrivals/components/AutoRefreshControl";
 import { BusStopSearchComboBox } from "./features/search-bar";
 import { useBusStopsStore } from "./features/search-bar/stores";
 
@@ -25,10 +26,15 @@ const App = () => {
           </p>
         </header>
 
-        <BusStopSearchComboBox
-          onBusStopSelect={handleBusStopSelect}
-          defaultValue={selectedBusStopCode}
-        />
+        <div className="flex gap-2 items-start">
+          <div className="flex-1 min-w-0">
+            <BusStopSearchComboBox
+              onBusStopSelect={handleBusStopSelect}
+              defaultValue={selectedBusStopCode}
+            />
+          </div>
+          <AutoRefreshControl busStopCode={selectedBusStopCode} />
+        </div>
 
         <BusStopArrivalCard busStopCode={selectedBusStopCode} />
       </div>

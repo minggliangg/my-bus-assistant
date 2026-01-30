@@ -11,8 +11,6 @@ import {
   Clock,
   Loader2,
   MapPin,
-  PauseCircle,
-  PlayCircle,
   Users,
 } from "lucide-react";
 import { useEffect } from "react";
@@ -35,9 +33,7 @@ export const BusStopArrivalCard = ({
     loading,
     error,
     fetchBusArrivals,
-    isAutoRefreshEnabled,
     isFetching,
-    toggleAutoRefresh,
     changedFields,
     isStale,
   } = useBusStore();
@@ -47,30 +43,6 @@ export const BusStopArrivalCard = ({
       fetchBusArrivals(busStopCode);
     }
   }, [busStopCode, fetchBusArrivals]);
-
-  const THROTTLE_INTERVAL_MS = parseInt(
-    import.meta.env.VITE_THROTTLE_INTERVAL_MS || "30000",
-    10,
-  );
-  const AUTO_REFRESH_INTERVAL_MS = THROTTLE_INTERVAL_MS + 1000;
-
-  // Auto-refresh interval
-  useEffect(() => {
-    if (!isAutoRefreshEnabled) return;
-
-    const intervalId = setInterval(() => {
-      if (busStopCode) {
-        fetchBusArrivals(busStopCode);
-      }
-    }, AUTO_REFRESH_INTERVAL_MS); // Add a small buffer to avoid throttling drift
-
-    return () => clearInterval(intervalId);
-  }, [
-    isAutoRefreshEnabled,
-    busStopCode,
-    fetchBusArrivals,
-    AUTO_REFRESH_INTERVAL_MS,
-  ]);
 
   // Show empty state when no bus stop is selected
   if (!busStopCode) {
@@ -141,46 +113,14 @@ export const BusStopArrivalCard = ({
               </h3>
             </div>
           </div>
-          <CardAction>
-            <div className="flex items-center gap-2">
-              {isStale && !isFetching && (
-                <div className="flex h-9 items-center gap-2 rounded-lg bg-amber-100 dark:bg-amber-900/30 px-3 text-amber-700 dark:text-amber-400">
-                  <Clock className="h-4 w-4" />
-                  <span className="text-xs font-medium">Cached</span>
-                </div>
-              )}
-              <button
-                onClick={toggleAutoRefresh}
-                disabled={isFetching}
-                className={cn(
-                  "flex h-9 items-center gap-2 rounded-lg px-3 transition-colors disabled:opacity-50",
-                  isAutoRefreshEnabled
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80",
-                )}
-                aria-label={
-                  isAutoRefreshEnabled
-                    ? "Stop auto-refresh"
-                    : "Start auto-refresh"
-                }
-              >
-                {isFetching ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : isAutoRefreshEnabled ? (
-                  <PauseCircle className="h-4 w-4" />
-                ) : (
-                  <PlayCircle className="h-4 w-4" />
-                )}
-                <span className="text-sm font-medium">
-                  {isFetching
-                    ? "Refreshing..."
-                    : isAutoRefreshEnabled
-                      ? "Stop"
-                      : "Auto"}
-                </span>
-              </button>
-            </div>
-          </CardAction>
+          {isStale && !isFetching && (
+            <CardAction>
+              <div className="flex h-9 items-center gap-2 rounded-lg bg-amber-100 dark:bg-amber-900/30 px-3 text-amber-700 dark:text-amber-400">
+                <Clock className="h-4 w-4" />
+                <span className="text-xs font-medium">Cached</span>
+              </div>
+            </CardAction>
+          )}
         </div>
 
         <div className="flex items-center gap-3 sm:flex-col sm:items-end sm:gap-1">
