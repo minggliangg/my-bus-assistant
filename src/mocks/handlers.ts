@@ -1,6 +1,7 @@
 import { http, HttpResponse } from "msw";
 import type { BusArrivalDTO } from "../features/bus-arrivals/dtos/bus-arrival-dto";
 import { EMPTY_BUS_DTO } from "../features/bus-arrivals/dtos/bus-arrival-dto";
+import type { BusStopsDTO } from "../features/search-bar/dtos/bus-stops-dto";
 
 // Mock API response for bus arrivals
 export const mockBusArrivalResponse: BusArrivalDTO = {
@@ -198,6 +199,41 @@ export const mockErrorResponse = {
   error: "Invalid bus stop code",
 };
 
+// Mock API response for bus stops
+export const mockBusStopsResponse: BusStopsDTO = {
+  "odata.metadata": "",
+  value: [
+    {
+      BusStopCode: "83139",
+      RoadName: "Opp Tg Katong Sec Sch",
+      Description: "Tg Katong Sec Sch",
+      Latitude: 1.316748,
+      Longitude: 103.900000,
+    },
+    {
+      BusStopCode: "55281",
+      RoadName: "Blk 507",
+      Description: "Blk 507",
+      Latitude: 1.323456,
+      Longitude: 103.923456,
+    },
+    {
+      BusStopCode: "01012",
+      RoadName: "Victoria St",
+      Description: "Hotel Grand Pacific",
+      Latitude: 1.296848,
+      Longitude: 103.852535,
+    },
+    {
+      BusStopCode: "01013",
+      RoadName: "Victoria St",
+      Description: "St Joseph's Church",
+      Latitude: 1.297928,
+      Longitude: 103.853321,
+    },
+  ],
+};
+
 export const handlers = [
   // Success response handler
   http.get("/api/ltaodataservice/v3/BusArrival", ({ request }) => {
@@ -243,5 +279,15 @@ export const handlers = [
   // Network error handler
   http.get("/api/ltaodataservice/v3/BusArrival/network-error", () => {
     return HttpResponse.error();
+  }),
+
+  // BusStops endpoint handler
+  http.get("/api/ltaodataservice/BusStops", () => {
+    return HttpResponse.json(mockBusStopsResponse);
+  }),
+
+  // BusStops error handler
+  http.get("/api/ltaodataservice/BusStops/error", () => {
+    return HttpResponse.json({ error: "API Error" }, { status: 500 });
   }),
 ];

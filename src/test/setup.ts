@@ -4,6 +4,7 @@ import { afterEach, expect, vi } from "vitest";
 
 // Set shorter throttle interval for tests
 import.meta.env.VITE_THROTTLE_INTERVAL_MS = "1000";
+import.meta.env.VITE_BUS_STOPS_REFRESH_DAYS = "7";
 
 // Setup global DOM environment
 if (typeof globalThis !== "undefined") {

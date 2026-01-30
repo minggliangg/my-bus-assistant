@@ -31,7 +31,7 @@ interface BusStopStore {
 
 // Serialization helpers for localStorage persistence
 const serializeBusStop = (busStop: BusStop): string => {
-  return JSON.stringify(busStop, (key, value) => {
+  return JSON.stringify(busStop, (_key, value) => {
     // Convert Date objects to ISO strings
     if (value instanceof Date) {
       return value.toISOString();

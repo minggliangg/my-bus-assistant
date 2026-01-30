@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
           target: useMockApi ? mockApiUrl : "https://datamall2.mytransport.sg",
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ""),
-          configure: (proxy, _options) => {
+          configure: (proxy) => {
             if (!useMockApi) {
               proxy.on("proxyReq", (proxyReq) => {
                 proxyReq.setHeader(
