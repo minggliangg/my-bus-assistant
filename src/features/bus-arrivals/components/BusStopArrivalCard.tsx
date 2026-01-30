@@ -47,7 +47,7 @@ export const BusStopArrivalCard = ({
   }, [busStopCode, fetchBusArrivals]);
 
   const THROTTLE_INTERVAL_MS = parseInt(
-    import.meta.env.VITE_THROTTLE_INTERVAL_MS || "45000",
+    import.meta.env.VITE_THROTTLE_INTERVAL_MS || "30000",
     10,
   );
   const AUTO_REFRESH_INTERVAL_MS = THROTTLE_INTERVAL_MS + 1000;

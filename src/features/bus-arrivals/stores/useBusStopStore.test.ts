@@ -1,3 +1,5 @@
+import { server } from "@/mocks/server";
+import { act, renderHook } from "@testing-library/react";
 import {
   afterAll,
   afterEach,
@@ -8,10 +10,8 @@ import {
   test,
   vi,
 } from "vitest";
-import { act, renderHook } from "@testing-library/react";
-import { server } from "@/mocks/server";
-import useBusStore from "./useBusStopStore";
 import { EMPTY_BUS_DTO } from "../dtos/bus-arrival-dto";
+import useBusStore from "./useBusStopStore";
 
 describe("useBusStopStore", () => {
   beforeAll(() => {
@@ -24,7 +24,7 @@ describe("useBusStopStore", () => {
 
   beforeEach(() => {
     vi.useFakeTimers();
-    localStorage.clear();
+    if (typeof localStorage !== "undefined") localStorage.clear();
     // Reset zustand state before each test
     useBusStore.getState().reset();
   });
@@ -32,7 +32,7 @@ describe("useBusStopStore", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
-    localStorage.clear();
+    if (typeof localStorage !== "undefined") localStorage.clear();
     server.resetHandlers();
   });
 
@@ -155,7 +155,8 @@ describe("useBusStopStore", () => {
   });
 
   test("clears previous error when new fetch starts", async () => {
-    const mockFetch = vi.spyOn(globalThis, "fetch")
+    const mockFetch = vi
+      .spyOn(globalThis, "fetch")
       .mockResolvedValueOnce({
         ok: false,
         status: 404,
@@ -165,13 +166,15 @@ describe("useBusStopStore", () => {
         ok: true,
         json: async () => ({
           BusStopCode: "83139",
-          Services: [{
-            ServiceNo: "15",
-            Operator: "SBST",
-            NextBus: EMPTY_BUS_DTO,
-            NextBus2: EMPTY_BUS_DTO,
-            NextBus3: EMPTY_BUS_DTO,
-          }],
+          Services: [
+            {
+              ServiceNo: "15",
+              Operator: "SBST",
+              NextBus: EMPTY_BUS_DTO,
+              NextBus2: EMPTY_BUS_DTO,
+              NextBus3: EMPTY_BUS_DTO,
+            },
+          ],
         }),
       } as Response);
 
@@ -221,9 +224,9 @@ describe("useBusStopStore", () => {
   });
 
   test("handles network errors", async () => {
-    const mockFetch = vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
-      new TypeError("Failed to fetch")
-    );
+    const mockFetch = vi
+      .spyOn(globalThis, "fetch")
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"));
 
     const { result } = renderHook(() => useBusStore());
 
@@ -301,12 +304,14 @@ describe("useBusStopStore", () => {
       await act(() => result.current.fetchBusArrivals("83139"));
       const firstBusStop = result.current.busStop;
 
-      // Immediate retry should be throttled
+      // Immediate retry should be throttled but show cached data
       await act(() => result.current.fetchBusArrivals("83139"));
-      expect(result.current.busStop).toBe(firstBusStop);
+      expect(result.current.busStop?.busStopCode).toBe(
+        firstBusStop?.busStopCode,
+      );
 
-      // After 45s should allow new fetch
-      vi.setSystemTime(now + 45000);
+      // After 30s should allow new fetch
+      vi.setSystemTime(now + 30000);
       await act(() => result.current.fetchBusArrivals("83139"));
       expect(result.current.busStop).not.toBeNull();
     });
@@ -318,7 +323,11 @@ describe("useBusStopStore", () => {
 
       await act(() => result.current.fetchBusArrivals("83139"));
 
-      expect((typeof localStorage !== 'undefined' ? localStorage.getItem : () => null)("bus-stop-last-update-83139")).toBe(now.toString());
+      expect(
+        (typeof localStorage !== "undefined"
+          ? localStorage.getItem
+          : () => null)("bus-stop-last-update-83139"),
+      ).toBe(now.toString());
       expect(result.current.lastUpdateTimestamp).toBe(now);
     });
 
@@ -328,8 +337,16 @@ describe("useBusStopStore", () => {
       await act(() => result.current.fetchBusArrivals("83139"));
       await act(() => result.current.fetchBusArrivals("83138"));
 
-      expect((typeof localStorage !== 'undefined' ? localStorage.getItem : () => null)("bus-stop-last-update-83139")).toBeTruthy();
-      expect((typeof localStorage !== 'undefined' ? localStorage.getItem : () => null)("bus-stop-last-update-83138")).toBeTruthy();
+      expect(
+        (typeof localStorage !== "undefined"
+          ? localStorage.getItem
+          : () => null)("bus-stop-last-update-83139"),
+      ).toBeTruthy();
+      expect(
+        (typeof localStorage !== "undefined"
+          ? localStorage.getItem
+          : () => null)("bus-stop-last-update-83138"),
+      ).toBeTruthy();
     });
 
     test("handles localStorage errors gracefully", async () => {
@@ -365,18 +382,20 @@ describe("useBusStopStore", () => {
       // Advance time past the retry window (5 seconds)
       vi.setSystemTime(now + 6000);
 
-      // Second fetch should succeed even within throttle window (45s)
+      // Second fetch should succeed even within throttle window (30s)
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           BusStopCode: "83139",
-          Services: [{
-            ServiceNo: "15",
-            Operator: "SBST",
-            NextBus: EMPTY_BUS_DTO,
-            NextBus2: EMPTY_BUS_DTO,
-            NextBus3: EMPTY_BUS_DTO,
-          }],
+          Services: [
+            {
+              ServiceNo: "15",
+              Operator: "SBST",
+              NextBus: EMPTY_BUS_DTO,
+              NextBus2: EMPTY_BUS_DTO,
+              NextBus3: EMPTY_BUS_DTO,
+            },
+          ],
         }),
       } as Response);
 
@@ -436,6 +455,82 @@ describe("useBusStopStore", () => {
     });
   });
 
+  describe("Re-selection behavior", () => {
+    test("re-selecting same bus stop within throttle shows cached data", async () => {
+      const { result } = renderHook(() => useBusStore());
+      const now = Date.now();
+      vi.setSystemTime(now);
+
+      // First fetch
+      await act(async () => {
+        await result.current.fetchBusArrivals("83139");
+      });
+
+      expect(result.current.selectedBusStopCode).toBe("83139");
+      expect(result.current.isStale).toBe(false);
+
+      // Re-select same stop (within throttle)
+      await act(async () => {
+        await result.current.fetchBusArrivals("83139");
+      });
+
+      // Should show cached data with stale indicator
+      expect(result.current.busStop?.busStopCode).toBe("83139");
+      expect(result.current.isStale).toBe(true);
+      expect(result.current.selectedBusStopCode).toBe("83139");
+    });
+
+    test("switching between stops shows correct cached data", async () => {
+      const { result } = renderHook(() => useBusStore());
+      const now = Date.now();
+      vi.setSystemTime(now);
+
+      // Fetch stop A
+      await act(async () => {
+        await result.current.fetchBusArrivals("83139");
+      });
+      expect(result.current.busStop?.busStopCode).toBe("83139");
+
+      // Fetch stop B
+      await act(async () => {
+        await result.current.fetchBusArrivals("83138");
+      });
+      expect(result.current.busStop?.busStopCode).toBe("83138");
+
+      // Switch back to A (within throttle) - should show A's cache
+      await act(async () => {
+        await result.current.fetchBusArrivals("83139");
+      });
+      expect(result.current.busStop?.busStopCode).toBe("83139");
+      expect(result.current.selectedBusStopCode).toBe("83139");
+      expect(result.current.isStale).toBe(true);
+    });
+
+    test("clears error when selecting new bus stop", async () => {
+      const { result } = renderHook(() => useBusStore());
+
+      // Mock fetch failure
+      const mockFetch = vi
+        .spyOn(globalThis, "fetch")
+        .mockRejectedValueOnce(new Error("Network error"));
+
+      await act(async () => {
+        await result.current.fetchBusArrivals("83139");
+      });
+      expect(result.current.error).toBe("Network error");
+
+      // Select different stop
+      mockFetch.mockRestore();
+      await act(async () => {
+        await result.current.fetchBusArrivals("83138");
+      });
+
+      // Error should be cleared
+      expect(result.current.error).toBeNull();
+      expect(result.current.selectedBusStopCode).toBe("83138");
+    });
+  });
+
   describe("localStorage persistence", () => {
     test("saves bus stop data to localStorage on successful fetch", async () => {
       const { result } = renderHook(() => useBusStore());
@@ -488,12 +583,16 @@ describe("useBusStopStore", () => {
           },
         ],
       };
-      localStorage.setItem("bus-stop-data-83139", JSON.stringify(mockCachedData));
+      localStorage.setItem(
+        "bus-stop-data-83139",
+        JSON.stringify(mockCachedData),
+      );
 
       // Reset store to simulate page refresh (but keep localStorage)
       act(() => {
         useBusStore.setState({
           busStop: null,
+          selectedBusStopCode: null,
           loading: true,
           error: null,
           isAutoRefreshEnabled: false,
@@ -549,8 +648,14 @@ describe("useBusStopStore", () => {
       const { result } = renderHook(() => useBusStore());
 
       // Add some cached data
-      localStorage.setItem("bus-stop-data-83139", JSON.stringify({ test: "data1" }));
-      localStorage.setItem("bus-stop-data-83138", JSON.stringify({ test: "data2" }));
+      localStorage.setItem(
+        "bus-stop-data-83139",
+        JSON.stringify({ test: "data1" }),
+      );
+      localStorage.setItem(
+        "bus-stop-data-83138",
+        JSON.stringify({ test: "data2" }),
+      );
       localStorage.setItem("other-key", "should-remain");
 
       act(() => {

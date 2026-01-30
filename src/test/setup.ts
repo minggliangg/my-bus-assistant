@@ -34,10 +34,12 @@ if (typeof globalThis !== "undefined") {
   });
 
   // Also add to window for Jest compatibility
-  Object.defineProperty(window, "localStorage", {
-    value: localStorageMock,
-    writable: true,
-  });
+  if (typeof window !== "undefined") {
+    Object.defineProperty(window, "localStorage", {
+      value: localStorageMock,
+      writable: true,
+    });
+  }
 
   // Setup ResizeObserver mock (needed by cmdk component)
   globalThis.ResizeObserver = class ResizeObserver {
@@ -47,7 +49,9 @@ if (typeof globalThis !== "undefined") {
   };
 
   // Setup Element.scrollIntoView mock (needed by cmdk component)
-  Element.prototype.scrollIntoView = vi.fn();
+  if (typeof Element !== "undefined") {
+    Element.prototype.scrollIntoView = vi.fn();
+  }
 }
 
 // Extend Vitest's expect with jest-dom matchers

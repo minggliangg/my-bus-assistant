@@ -15,6 +15,7 @@ interface ChangedField {
 
 interface BusStopStore {
   busStop: BusStop | null;
+  selectedBusStopCode: string | null;
   loading: boolean;
   error: string | null;
   isAutoRefreshEnabled: boolean;
@@ -139,6 +140,7 @@ const useBusStore = create<BusStopStore>((set, get) => {
 
   return {
     busStop: null,
+    selectedBusStopCode: null,
     loading: true,
     error: null,
     isAutoRefreshEnabled: false,
@@ -150,32 +152,45 @@ const useBusStore = create<BusStopStore>((set, get) => {
 
     fetchBusArrivals: async (busStopCode: string) => {
       const THROTTLE_INTERVAL_MS = parseInt(
-        import.meta.env.VITE_THROTTLE_INTERVAL_MS || "45000",
+        import.meta.env.VITE_THROTTLE_INTERVAL_MS || "30000",
         10,
-      ); // Throttle interval from env var (default: 45s)
+      );
       const storageKey = `bus-stop-last-update-${busStopCode}`;
       const now = Date.now();
 
-      // Get current state
       const currentState = get();
+
+      // [1] Prevent overlapping fetches
       if (currentState.isFetching) {
         console.log("Fetch skipped: already in progress");
         return;
       }
 
-      // Load cached data if we don't have any data yet
-      if (!currentState.busStop) {
-        const cachedBusStop = loadCachedBusStop(busStopCode);
-        if (cachedBusStop) {
-          set({
-            busStop: cachedBusStop,
-            loading: false,
-            isStale: true,
-          });
-        }
+      // [2] Track selected bus stop code
+      set({ selectedBusStopCode: busStopCode });
+
+      // [3] ALWAYS load cached data for the selected stop
+      const cachedBusStop = loadCachedBusStop(busStopCode);
+
+      if (cachedBusStop) {
+        // Show cached data immediately
+        set({
+          busStop: cachedBusStop,
+          loading: false,
+          error: null,
+          isStale: true,
+        });
+      } else {
+        // No cache, clear previous data and show loading
+        set({
+          busStop: null,
+          loading: true,
+          error: null,
+          isStale: false,
+        });
       }
 
-      // Check throttle, but allow retry if last attempt failed
+      // [4] Check throttle for API fetch
       try {
         const lastUpdateRaw = localStorage.getItem(storageKey);
         const lastUpdate = lastUpdateRaw ? parseInt(lastUpdateRaw, 10) : null;
@@ -188,7 +203,12 @@ const useBusStore = create<BusStopStore>((set, get) => {
             lastAttempt !== null && now - lastAttempt > 5000;
 
           if (!(failedAttemptAfterLastUpdate && retryWindowElapsed)) {
-            console.log("Fetch throttled: less than 45s since last update");
+            console.log("Fetch throttled: less than 30s since last update");
+            // Keep cached data visible with stale indicator
+            set({
+              loading: false,
+              isStale: cachedBusStop !== null,
+            });
             return;
           }
         }
@@ -196,10 +216,9 @@ const useBusStore = create<BusStopStore>((set, get) => {
         console.warn("Failed to check throttle:", error);
       }
 
-      // Set fetching state and attempt timestamp
+      // [5] Proceed with API fetch (not throttled)
       set({
         loading: true,
-        error: null,
         isFetching: true,
         lastAttemptTimestamp: now,
       });
@@ -222,24 +241,20 @@ const useBusStore = create<BusStopStore>((set, get) => {
         const busStop = mapBusStopDtoToModel(dto);
         const now = Date.now();
 
-        // Compare with previous data to detect changes
         const changedFields = currentState.busStop
           ? compareBusArrivals(currentState.busStop.services, busStop.services)
           : [];
 
-        // Cleanup old changes before adding new ones
         const existingChanges = currentState.changedFields;
         const updatedChanges =
           cleanupOldChanges(existingChanges).concat(changedFields);
 
-        // Update timestamp after successful fetch
         try {
           localStorage.setItem(storageKey, now.toString());
         } catch (error) {
           console.warn("Failed to save timestamp:", error);
         }
 
-        // Save bus stop data to cache
         saveBusStopToCache(busStopCode, busStop);
 
         set({
@@ -286,6 +301,7 @@ const useBusStore = create<BusStopStore>((set, get) => {
 
       set({
         busStop: null,
+        selectedBusStopCode: null,
         loading: true,
         error: null,
         isAutoRefreshEnabled: false,
