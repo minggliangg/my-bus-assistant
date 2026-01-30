@@ -1,5 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import useBusStopsStore from "./useBusStopsStore";
+import * as busStopsDb from "@/lib/storage/bus-stops-db";
+import "fake-indexeddb/auto";
 
 describe("useBusStopsStore", () => {
   beforeEach(() => {
@@ -175,5 +177,86 @@ describe("useBusStopsStore", () => {
 
     const results = useBusStopsStore.getState().searchBusStops("nonexistent");
     expect(results).toHaveLength(0);
+  });
+});
+
+describe("useBusStopsStore (fetchBusStops)", () => {
+  beforeEach(() => {
+    useBusStopsStore.getState().reset();
+    vi.restoreAllMocks();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("should use cached data if fresh", async () => {
+    const mockCachedStops = [
+      {
+        busStopCode: "01012",
+        roadName: "Victoria St",
+        description: "Hotel Grand Pacific",
+        latitude: 1.296848,
+        longitude: 103.852535,
+      },
+    ];
+    const now = Date.now();
+    const lastUpdate = now - 2 * 24 * 60 * 60 * 1000;
+
+    vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue(mockCachedStops);
+    vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(lastUpdate);
+
+    await useBusStopsStore.getState().fetchBusStops();
+
+    const state = useBusStopsStore.getState();
+    expect(state.busStops).toEqual(mockCachedStops);
+    expect(state.loading).toBe(false);
+    expect(state.isStale).toBe(false);
+    expect(state.lastUpdateTimestamp).toBe(lastUpdate);
+  });
+
+  it("should handle fetch errors and set error state", async () => {
+    vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue([]);
+    vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(null);
+    const fetchMock = vi.fn(() =>
+      Promise.resolve({
+        ok: false,
+        status: 500,
+      } as Response),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const fetchPromise = useBusStopsStore.getState().fetchBusStops();
+
+    await vi.runAllTimersAsync();
+
+    await fetchPromise;
+
+    const state = useBusStopsStore.getState();
+    expect(state.error).toBeTruthy();
+    expect(state.loading).toBe(false);
+    expect(state.retryCount).toBe(3);
+
+    vi.unstubAllGlobals();
+  });
+
+  it("should handle network errors", async () => {
+    vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue([]);
+    vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(null);
+    const fetchMock = vi.fn(() => Promise.reject(new Error("Network error")));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const fetchPromise = useBusStopsStore.getState().fetchBusStops();
+
+    await vi.runAllTimersAsync();
+
+    await fetchPromise;
+
+    const state = useBusStopsStore.getState();
+    expect(state.error).toContain("Network error");
+    expect(state.loading).toBe(false);
+
+    vi.unstubAllGlobals();
   });
 });
