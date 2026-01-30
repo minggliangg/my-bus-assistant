@@ -5,8 +5,9 @@ import type { BusStopSearchModel } from "../models/bus-stops-model";
 import {
   getAllBusStops,
   getLastUpdate,
-  saveBusStops,
   setLastUpdate,
+  appendBusStops,
+  clearBusStopsOnly,
 } from "@/lib/storage/bus-stops-db";
 
 interface BusStopsStore {
@@ -84,31 +85,54 @@ const useBusStopsStore = create<BusStopsStore>((set, get) => {
 
         while (retryAttempts <= maxRetries) {
           try {
-            const response = await fetch("/api/ltaodataservice/BusStops", {
-              headers: {
-                Accept: "application/json",
-              },
-            });
+            const PAGE_SIZE = 500;
+            const MAX_PAGES = 20;
+            const allBusStops: BusStopSearchModel[] = [];
+            let offset = 0;
+            let pageCount = 0;
 
-            if (!response.ok) {
-              const isRetryable =
-                response.status >= 500 || response.status === 429;
+            await clearBusStopsOnly();
 
-              if (!isRetryable || retryAttempts === maxRetries) {
-                throw new Error(`API Error: ${response.status}`);
+            while (pageCount < MAX_PAGES) {
+              const response = await fetch(`/api/ltaodataservice/BusStops?$skip=${offset}`, {
+                headers: {
+                  Accept: "application/json",
+                },
+              });
+
+              if (!response.ok) {
+                const isRetryable =
+                  response.status >= 500 || response.status === 429;
+
+                if (!isRetryable || retryAttempts === maxRetries) {
+                  throw new Error(`API Error: ${response.status}`);
+                }
+
+                throw new Error(`Retryable error: ${response.status}`);
               }
 
-              throw new Error(`Retryable error: ${response.status}`);
+              const dto: BusStopsDTO = await response.json();
+              const pageBusStops = mapBusStopsDtoToModel(dto);
+
+              if (pageBusStops.length === 0) {
+                break;
+              }
+
+              await appendBusStops(pageBusStops);
+              allBusStops.push(...pageBusStops);
+              pageCount++;
+
+              if (pageBusStops.length < PAGE_SIZE) {
+                break;
+              }
+
+              offset += PAGE_SIZE;
             }
 
-            const dto: BusStopsDTO = await response.json();
-            const busStops = mapBusStopsDtoToModel(dto);
-
-            await saveBusStops(busStops);
             await setLastUpdate(now);
 
             set({
-              busStops,
+              busStops: allBusStops,
               loading: false,
               lastUpdateTimestamp: now,
               isStale: false,

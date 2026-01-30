@@ -65,6 +65,20 @@ const saveBusStops = async (stops: BusStopSearchModel[]): Promise<void> => {
   await tx.done;
 };
 
+const appendBusStops = async (stops: BusStopSearchModel[]): Promise<void> => {
+  const database = await openDatabase();
+  const tx = database.transaction(BUS_STOPS_STORE, "readwrite");
+  await Promise.all(
+    stops.map((stop) => tx.objectStore(BUS_STOPS_STORE).put(stop))
+  );
+  await tx.done;
+};
+
+const clearBusStopsOnly = async (): Promise<void> => {
+  const database = await openDatabase();
+  await database.clear(BUS_STOPS_STORE);
+};
+
 const getLastUpdate = async (): Promise<number | null> => {
   const database = await openDatabase();
   const metadata = await database.get(METADATA_STORE, LAST_UPDATE_KEY);
@@ -107,6 +121,8 @@ export {
   openDatabase,
   getAllBusStops,
   saveBusStops,
+  appendBusStops,
+  clearBusStopsOnly,
   getLastUpdate,
   setLastUpdate,
   getBusStopByCode,
