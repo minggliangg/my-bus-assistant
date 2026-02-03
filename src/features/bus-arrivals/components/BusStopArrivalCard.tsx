@@ -107,13 +107,13 @@ export const BusStopArrivalCard = ({
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
               <MapPin className="h-6 w-6 text-primary" />
             </div>
-            <div className="flex-1">
+            <div className="flex flex-col text-left">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Bus Stop
               </p>
-              <h3 className="text-xl font-bold tracking-tight">
+              <span className="text-lg font-bold text-foreground">
                 {busStop.busStopCode}
-              </h3>
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-2">
