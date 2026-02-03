@@ -1,14 +1,14 @@
+import {
+  appendBusStops,
+  clearBusStopsOnly,
+  getAllBusStops,
+  getLastUpdate,
+  setLastUpdate,
+} from "@/lib/storage/bus-stops-db";
 import { create } from "zustand";
 import type { BusStopsDTO } from "../dtos/bus-stops-dto";
 import { mapBusStopsDtoToModel } from "../mappers/bus-stops-mapper";
 import type { BusStopSearchModel } from "../models/bus-stops-model";
-import {
-  getAllBusStops,
-  getLastUpdate,
-  setLastUpdate,
-  appendBusStops,
-  clearBusStopsOnly,
-} from "@/lib/storage/bus-stops-db";
 
 interface BusStopsStore {
   busStops: BusStopSearchModel[];
@@ -26,7 +26,8 @@ interface BusStopsStore {
 }
 
 const useBusStopsStore = create<BusStopsStore>((set, get) => {
-  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+  const sleep = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
 
   return {
     busStops: [],
@@ -56,8 +57,7 @@ const useBusStopsStore = create<BusStopsStore>((set, get) => {
       try {
         const cachedStops = await getAllBusStops();
         const lastUpdate = await getLastUpdate();
-        const shouldRefresh =
-          !lastUpdate || now - lastUpdate > REFRESH_MS;
+        const shouldRefresh = !lastUpdate || now - lastUpdate > REFRESH_MS;
 
         if (cachedStops.length > 0 && !shouldRefresh) {
           set({
@@ -85,50 +85,33 @@ const useBusStopsStore = create<BusStopsStore>((set, get) => {
 
         while (retryAttempts <= maxRetries) {
           try {
-            const PAGE_SIZE = 500;
-            const MAX_PAGES = 20;
-            const allBusStops: BusStopSearchModel[] = [];
-            let offset = 0;
-            let pageCount = 0;
+            console.log("Fetching all bus stops from API...");
 
             await clearBusStopsOnly();
 
-            while (pageCount < MAX_PAGES) {
-              const response = await fetch(`/api/ltaodataservice/BusStops?$skip=${offset}`, {
-                headers: {
-                  Accept: "application/json",
-                },
-              });
+            const response = await fetch("/api/ltaodataservice/BusStops", {
+              headers: {
+                Accept: "application/json",
+              },
+            });
 
-              if (!response.ok) {
-                const isRetryable =
-                  response.status >= 500 || response.status === 429;
+            if (!response.ok) {
+              const isRetryable =
+                response.status >= 500 || response.status === 429;
 
-                if (!isRetryable || retryAttempts === maxRetries) {
-                  throw new Error(`API Error: ${response.status}`);
-                }
-
-                throw new Error(`Retryable error: ${response.status}`);
+              if (!isRetryable || retryAttempts === maxRetries) {
+                throw new Error(`API Error: ${response.status}`);
               }
 
-              const dto: BusStopsDTO = await response.json();
-              const pageBusStops = mapBusStopsDtoToModel(dto);
-
-              if (pageBusStops.length === 0) {
-                break;
-              }
-
-              await appendBusStops(pageBusStops);
-              allBusStops.push(...pageBusStops);
-              pageCount++;
-
-              if (pageBusStops.length < PAGE_SIZE) {
-                break;
-              }
-
-              offset += PAGE_SIZE;
+              throw new Error(`Retryable error: ${response.status}`);
             }
 
+            const dto: BusStopsDTO = await response.json();
+            const allBusStops = mapBusStopsDtoToModel(dto);
+
+            console.log(`Received ${allBusStops.length} bus stops from API`);
+
+            await appendBusStops(allBusStops);
             await setLastUpdate(now);
 
             set({
@@ -178,9 +161,15 @@ const useBusStopsStore = create<BusStopsStore>((set, get) => {
 
       return busStops
         .filter((stop) => {
-          const matchesCode = stop.busStopCode.toLowerCase().includes(lowerQuery);
-          const matchesDescription = stop.description.toLowerCase().includes(lowerQuery);
-          const matchesRoadName = stop.roadName.toLowerCase().includes(lowerQuery);
+          const matchesCode = stop.busStopCode
+            .toLowerCase()
+            .includes(lowerQuery);
+          const matchesDescription = stop.description
+            .toLowerCase()
+            .includes(lowerQuery);
+          const matchesRoadName = stop.roadName
+            .toLowerCase()
+            .includes(lowerQuery);
           return matchesCode || matchesDescription || matchesRoadName;
         })
         .slice(0, 10);

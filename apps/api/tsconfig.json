@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ESNext"],
+    "outDir": "./dist",
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@my-bus-assistant/shared": ["../../packages/shared/src"]
+    }
+  },
+  "include": ["src", "tests"]
+}

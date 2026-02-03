@@ -1,73 +1,105 @@
-# React + TypeScript + Vite
+# My Bus Assistant - Monorepo
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A Singapore bus arrival tracking app built with React + Hono, organized as a Turborepo monorepo.
 
-Currently, two official plugins are available:
+## Project Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+my-bus-assistant/
+├── apps/
+│   ├── web/          # React frontend (Vite)
+│   └── api/          # Hono backend (Bun)
+└── packages/
+    └── shared/       # Shared TypeScript types
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Prerequisites
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- [Bun](https://bun.sh) v1.2.4 or higher
+- LTA DataMall API key ([get one here](https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html))
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Setup
+
+1. **Install dependencies:**
+
+   ```bash
+   bun install
+   ```
+
+2. **Configure API key:**
+
+   Create `apps/api/.env`:
+
+   ```bash
+   LTA_DATAMALL_API_KEY=your_api_key_here
+   PORT=3001  # optional, defaults to 3001
+   ```
+
+## Development
+
+Run both frontend and backend concurrently:
+
+```bash
+bun dev
 ```
+
+This starts:
+
+- **Frontend**: http://localhost:5173 (or next available port)
+- **Backend**: http://localhost:3001
+
+The frontend automatically proxies `/api/*` requests to the backend.
+
+## API Endpoints
+
+| Endpoint                                                   | Description                             |
+| ---------------------------------------------------------- | --------------------------------------- |
+| `GET /api/ltaodataservice/v3/BusArrival?BusStopCode=12345` | Get bus arrival times for a stop        |
+| `GET /api/ltaodataservice/BusStops`                        | Get all bus stops (aggregated from LTA) |
+| `GET /health`                                              | Health check                            |
+
+> **Note**: The `/BusStops` endpoint automatically fetches all paginated results from LTA DataMall and returns them in a single response.
+
+## Testing
+
+```bash
+# Run all tests
+bun test
+
+# Test specific package
+cd apps/api && bun test
+cd apps/web && bun run test
+```
+
+## Building
+
+```bash
+# Build all packages
+bun run build
+
+# Build specific package
+cd apps/api && bun run build
+cd apps/web && bun run build
+```
+
+## Architecture
+
+- **Frontend**: Vite + React + TailwindCSS + Zustand
+- **Backend**: Hono (on Bun runtime)
+- **Shared**: TypeScript DTOs for type safety across frontend/backend
+- **Build**: Turborepo for caching and parallel execution
+
+## Key Features
+
+- ✅ Server-side API key management (never exposed to client)
+- ✅ Automatic pagination aggregation for bus stops
+- ✅ Input validation and error handling
+- ✅ Shared TypeScript types between frontend and backend
+- ✅ Fast development with Bun and Turborepo
+
+## Next Steps (Phase 2)
+
+- [ ] Add response caching middleware
+- [ ] Add rate limiting
+- [ ] Add structured logging
+- [ ] Deploy to production

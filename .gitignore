@@ -32,3 +32,6 @@ dist-ssr
 # Coverage
 /coverage
 learnings.md
+
+# Turborepo
+.turbo
