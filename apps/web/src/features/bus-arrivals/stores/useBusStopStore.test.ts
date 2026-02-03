@@ -1,9 +1,6 @@
-import { server } from "@/mocks/server";
 import { act, renderHook } from "@testing-library/react";
 import {
-  afterAll,
   afterEach,
-  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -14,14 +11,6 @@ import { EMPTY_BUS_DTO } from "../dtos/bus-arrival-dto";
 import useBusStore from "./useBusStopStore";
 
 describe("useBusStopStore", () => {
-  beforeAll(() => {
-    server.listen({ onUnhandledRequest: "error" });
-  });
-
-  afterAll(() => {
-    server.close();
-  });
-
   beforeEach(() => {
     vi.useFakeTimers();
     if (typeof localStorage !== "undefined") localStorage.clear();
@@ -33,7 +22,6 @@ describe("useBusStopStore", () => {
     vi.useRealTimers();
     vi.restoreAllMocks();
     if (typeof localStorage !== "undefined") localStorage.clear();
-    server.resetHandlers();
   });
 
   test("has initial state", () => {

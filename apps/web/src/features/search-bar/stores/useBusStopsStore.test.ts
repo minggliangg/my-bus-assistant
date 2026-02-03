@@ -1,13 +1,15 @@
+import { http, HttpResponse } from "msw";
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import useBusStopsStore from "./useBusStopsStore";
 import * as busStopsDb from "@/lib/storage/bus-stops-db";
+import { server } from "@/mocks/server";
 import "fake-indexeddb/auto";
 
 describe("useBusStopsStore", () => {
   beforeEach(() => {
     useBusStopsStore.getState().reset();
     vi.restoreAllMocks();
-    import.meta.env.VITE_BUS_STOPS_REFRESH_DAYS = "7";
+    vi.stubEnv("VITE_BUS_STOPS_REFRESH_DAYS", "7");
   });
 
   it("should have initial state", () => {
@@ -219,13 +221,12 @@ describe("useBusStopsStore (fetchBusStops)", () => {
   it("should handle fetch errors and set error state", async () => {
     vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue([]);
     vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(null);
-    const fetchMock = vi.fn(() =>
-      Promise.resolve({
-        ok: false,
-        status: 500,
-      } as Response),
+
+    server.use(
+      http.get("/api/ltaodataservice/BusStops", () => {
+        return HttpResponse.json({ error: "Server error" }, { status: 500 });
+      })
     );
-    vi.stubGlobal("fetch", fetchMock);
 
     const fetchPromise = useBusStopsStore.getState().fetchBusStops();
 
@@ -237,15 +238,17 @@ describe("useBusStopsStore (fetchBusStops)", () => {
     expect(state.error).toBeTruthy();
     expect(state.loading).toBe(false);
     expect(state.retryCount).toBe(3);
-
-    vi.unstubAllGlobals();
   });
 
   it("should handle network errors", async () => {
     vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue([]);
     vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(null);
-    const fetchMock = vi.fn(() => Promise.reject(new Error("Network error")));
-    vi.stubGlobal("fetch", fetchMock);
+
+    server.use(
+      http.get("/api/ltaodataservice/BusStops", () => {
+        return HttpResponse.error();
+      })
+    );
 
     const fetchPromise = useBusStopsStore.getState().fetchBusStops();
 
@@ -254,9 +257,7 @@ describe("useBusStopsStore (fetchBusStops)", () => {
     await fetchPromise;
 
     const state = useBusStopsStore.getState();
-    expect(state.error).toContain("Network error");
+    expect(state.error).toContain("Failed to fetch");
     expect(state.loading).toBe(false);
-
-    vi.unstubAllGlobals();
   });
 });

@@ -1,10 +1,11 @@
 import * as matchers from "@testing-library/jest-dom/matchers";
 import { cleanup } from "@testing-library/react";
-import { afterEach, expect, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, expect, vi } from "vitest";
+import { server } from "../mocks/server";
 
 // Set shorter throttle interval for tests
-import.meta.env.VITE_THROTTLE_INTERVAL_MS = "1000";
-import.meta.env.VITE_BUS_STOPS_REFRESH_DAYS = "7";
+const TEST_THROTTLE_INTERVAL_MS = "1000";
+const TEST_BUS_STOPS_REFRESH_DAYS = "7";
 
 // Setup global DOM environment
 if (typeof globalThis !== "undefined") {
@@ -53,6 +54,21 @@ if (typeof globalThis !== "undefined") {
     Element.prototype.scrollIntoView = vi.fn();
   }
 }
+
+// Setup MSW server for API mocking
+beforeAll(() => {
+  vi.stubEnv("VITE_THROTTLE_INTERVAL_MS", TEST_THROTTLE_INTERVAL_MS);
+  vi.stubEnv("VITE_BUS_STOPS_REFRESH_DAYS", TEST_BUS_STOPS_REFRESH_DAYS);
+  server.listen({ onUnhandledRequest: "error" });
+});
+
+afterEach(() => {
+  server.resetHandlers();
+});
+
+afterAll(() => {
+  server.close();
+});
 
 // Extend Vitest's expect with jest-dom matchers
 expect.extend(matchers);

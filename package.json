@@ -9,8 +9,10 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "test": "turbo test",
-    "lint": "turbo lint",
-    "clean": "turbo clean && rm -rf node_modules"
+    "lint": "turbo run lint",
+    "clean:cache": "turbo clean",
+    "clean:deps": "rm -rf node_modules && rm -rf apps/*/node_modules packages/*/node_modules",
+    "clean": "turbo run clean --cache=false"
   },
   "devDependencies": {
     "turbo": "^2.5.3",

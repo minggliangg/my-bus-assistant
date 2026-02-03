@@ -1,10 +1,7 @@
-import { server } from "@/mocks/server";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import {
-  afterAll,
   afterEach,
-  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -20,16 +17,7 @@ const renderWithProviders = (ui: React.ReactElement) => {
 };
 
 describe("AutoRefreshControl", () => {
-  beforeAll(() => {
-    server.listen({ onUnhandledRequest: "error" });
-  });
-
-  afterAll(() => {
-    server.close();
-  });
-
   afterEach(() => {
-    server.resetHandlers();
     localStorage.clear();
     useBusStore.getState().reset();
   });

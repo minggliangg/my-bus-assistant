@@ -4,54 +4,169 @@ import { fetchFromLTA } from "../lib/lta-client";
 
 const busStops = new Hono();
 
-/**
- * GET /api/ltaodataservice/BusStops
- * Fetches ALL bus stops from LTA DataMall by aggregating paginated results
- * Returns a single response with all bus stops
- */
-busStops.get("/", async (c) => {
-  try {
-    const PAGE_SIZE = 500;
-    const MAX_PAGES = 20; // Safety limit
-    const allBusStops: BusStopDTO[] = [];
-    let offset = 0;
-    let pageCount = 0;
+const PAGE_SIZE = 500;
+const MAX_PAGES = 20;
+const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const REFRESH_THRESHOLD_MS = 24 * 60 * 60 * 1000;
 
-    console.log("Fetching all bus stops from LTA DataMall...");
+interface BusStopsCache {
+  data: BusStopDTO[];
+  timestamp: number;
+}
 
-    while (pageCount < MAX_PAGES) {
-      const data = await fetchFromLTA<BusStopsDTO>(
-        "/ltaodataservice/BusStops",
-        { $skip: offset.toString() },
-      );
+const busStopsCache: BusStopsCache = {
+  data: [],
+  timestamp: 0,
+};
 
-      if (!data.value || data.value.length === 0) {
-        break;
-      }
+let refreshPromise: Promise<void> | null = null;
+let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
 
-      allBusStops.push(...data.value);
-      pageCount++;
+async function fetchAllBusStops(): Promise<BusStopDTO[]> {
+  const allBusStops: BusStopDTO[] = [];
+  let offset = 0;
+  let pageCount = 0;
 
-      console.log(
-        `Fetched page ${pageCount}: ${data.value.length} stops (total: ${allBusStops.length})`,
-      );
+  console.log("Fetching all bus stops from LTA DataMall...");
 
-      // If we got fewer results than PAGE_SIZE, we've reached the end
-      if (data.value.length < PAGE_SIZE) {
-        break;
-      }
+  while (pageCount < MAX_PAGES) {
+    const data = await fetchFromLTA<BusStopsDTO>(
+      "/ltaodataservice/BusStops",
+      { $skip: offset.toString() },
+    );
 
-      offset += PAGE_SIZE;
+    if (!data.value || data.value.length === 0) {
+      break;
     }
 
+    allBusStops.push(...data.value);
+    pageCount++;
+
+    if (data.value.length < PAGE_SIZE) {
+      break;
+    }
+
+    offset += PAGE_SIZE;
+  }
+
+  console.log(
+    `Completed: fetched ${allBusStops.length} bus stops in ${pageCount} pages`,
+  );
+
+  return allBusStops;
+}
+
+async function refreshBusStopsCache(): Promise<void> {
+  console.log("Background refreshing bus stops cache...");
+  try {
+    const freshData = await fetchAllBusStops();
+    busStopsCache.data = freshData;
+    busStopsCache.timestamp = Date.now();
+    console.log("Bus stops cache refreshed successfully");
+  } catch (error) {
+    console.error("Failed to refresh bus stops cache:", error);
+  }
+}
+
+function triggerBackgroundRefresh(): void {
+  if (refreshPromise) return;
+
+  refreshPromise = refreshBusStopsCache().finally(() => {
+    refreshPromise = null;
+    scheduleBackgroundRefresh();
+  });
+}
+
+function scheduleBackgroundRefresh(): void {
+  if (refreshTimeout) clearTimeout(refreshTimeout);
+
+  const cacheAge = Date.now() - busStopsCache.timestamp;
+  if (busStopsCache.data.length === 0) return;
+  if (cacheAge >= CACHE_TTL_MS) return;
+
+  const delay = Math.max(0, REFRESH_THRESHOLD_MS - cacheAge);
+  refreshTimeout = setTimeout(triggerBackgroundRefresh, delay);
+}
+
+/**
+ * GET /api/ltaodataservice/BusStops
+ * Returns cached bus stops if valid, otherwise fetches fresh data
+ * Implements 7-day TTL with background refresh
+ */
+busStops.get("/", async (c) => {
+  const now = Date.now();
+  const cacheAge = now - busStopsCache.timestamp;
+
+  if (busStopsCache.data.length > 0) {
+    if (cacheAge < REFRESH_THRESHOLD_MS) {
+      return c.json({
+        "odata.metadata":
+          "https://datamall2.mytransport.sg/ltaodataservice/$metadata#BusStops",
+        value: busStopsCache.data,
+        cached: true,
+        cacheAgeMs: cacheAge,
+      });
+    }
+
+    if (cacheAge < CACHE_TTL_MS) {
+      console.log(
+        `Cache stale (${Math.round(cacheAge / 86400000)} days), serving stale while refreshing...`,
+      );
+      triggerBackgroundRefresh();
+      return c.json({
+        "odata.metadata":
+          "https://datamall2.mytransport.sg/ltaodataservice/$metadata#BusStops",
+        value: busStopsCache.data,
+        cached: true,
+        cacheAgeMs: cacheAge,
+        stale: true,
+      });
+    }
+  }
+
+  if (busStopsCache.data.length > 0) {
     console.log(
-      `Completed: fetched ${allBusStops.length} bus stops in ${pageCount} pages`,
+      `Cache expired (${Math.round(cacheAge / 86400000)} days), fetching fresh...`,
     );
+    try {
+      const data = await fetchAllBusStops();
+      busStopsCache.data = data;
+      busStopsCache.timestamp = now;
+      scheduleBackgroundRefresh();
+      return c.json({
+        "odata.metadata":
+          "https://datamall2.mytransport.sg/ltaodataservice/$metadata#BusStops",
+        value: data,
+        cached: false,
+        cacheAgeMs: 0,
+      });
+    } catch (error) {
+      console.error("BusStops refresh error:", error);
+      return c.json({
+        "odata.metadata":
+          "https://datamall2.mytransport.sg/ltaodataservice/$metadata#BusStops",
+        value: busStopsCache.data,
+        cached: true,
+        cacheAgeMs: cacheAge,
+        stale: true,
+        refreshFailed: true,
+      });
+    }
+  }
+
+  console.log("Cache empty, fetching fresh bus stops data...");
+  try {
+    const data = await fetchAllBusStops();
+    busStopsCache.data = data;
+    busStopsCache.timestamp = now;
+    scheduleBackgroundRefresh();
 
     return c.json({
       "odata.metadata":
         "https://datamall2.mytransport.sg/ltaodataservice/$metadata#BusStops",
-      value: allBusStops,
+      value: data,
+      cached: false,
+      cacheAgeMs: 0,
     });
   } catch (error) {
     console.error("BusStops error:", error);

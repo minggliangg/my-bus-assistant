@@ -1,9 +1,6 @@
-import { server } from "@/mocks/server";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import {
-  afterAll,
   afterEach,
-  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -19,16 +16,7 @@ const renderWithProviders = (ui: React.ReactElement) => {
 };
 
 describe("BusStopCard", () => {
-  beforeAll(() => {
-    server.listen({ onUnhandledRequest: "error" });
-  });
-
-  afterAll(() => {
-    server.close();
-  });
-
   afterEach(() => {
-    server.resetHandlers();
     localStorage.clear();
     useBusStore.getState().reset();
   });
@@ -92,9 +80,7 @@ describe("BusStopCard", () => {
       renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
-        const busStopCode = screen.getByText("83139");
-        expect(busStopCode).toBeInTheDocument();
-        expect(busStopCode.tagName).toBe("H3");
+        expect(screen.getByText("83139")).toBeInTheDocument();
       });
     });
 

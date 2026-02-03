@@ -18,7 +18,9 @@ bun dev          # Start both frontend and backend concurrently
 bun build        # Build all packages
 bun test         # Run all tests
 bun lint         # Lint all packages
-bun clean        # Clean all node_modules and build artifacts
+bun clean        # Run clean script in all packages (removes build artifacts)
+bun clean:cache  # Clean Turborepo cache only
+bun clean:deps   # Remove all node_modules directories
 ```
 
 ### Frontend (`apps/web/`)

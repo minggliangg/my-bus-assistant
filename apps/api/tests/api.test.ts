@@ -1,4 +1,27 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, afterEach, mock } from "bun:test";
+
+const mockBusStopsResponse = {
+  "odata.metadata": "",
+  value: [
+    {
+      BusStopCode: "01012",
+      RoadName: "Victoria St",
+      Description: "Hotel Grand Pacific",
+      Latitude: 1.296848,
+      Longitude: 103.852535,
+    },
+  ],
+};
+
+// Mock the lta-client module BEFORE importing app
+const ltaMock = mock.module("../src/lib/lta-client", () => ({
+  fetchFromLTA: async (endpoint: string) => {
+    if (endpoint.includes("BusStops")) return mockBusStopsResponse;
+    throw new Error(`Unmocked endpoint: ${endpoint}`);
+  },
+}));
+
+// Now import app (lta-client will use our mock)
 import { app } from "../src/index";
 
 describe("API Server", () => {
@@ -37,17 +60,13 @@ describe("API Server", () => {
     it("returns aggregated bus stops without pagination params", async () => {
       const res = await app.request("/api/ltaodataservice/BusStops");
 
-      // Should succeed (will fail if LTA API key is invalid, but structure is correct)
-      // In a real test environment, you'd mock the LTA API
-      expect([200, 500]).toContain(res.status);
+      expect(res.status).toBe(200);
 
       const json = (await res.json()) as any;
 
-      if (res.status === 200) {
-        // Verify response structure matches LTA format
-        expect(json).toHaveProperty("value");
-        expect(Array.isArray(json.value)).toBe(true);
-      }
+      expect(json).toHaveProperty("value");
+      expect(Array.isArray(json.value)).toBe(true);
+      expect(json.value).toEqual(mockBusStopsResponse.value);
     });
   });
 

@@ -111,9 +111,9 @@ export const BusStopArrivalCard = ({
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Bus Stop
               </p>
-              <span className="text-lg font-bold text-foreground">
+              <h3 className="text-lg font-bold text-foreground">
                 {busStop.busStopCode}
-              </span>
+              </h3>
             </div>
           </div>
           <div className="flex items-center gap-2">
