@@ -4,9 +4,11 @@ import { BusStopArrivalCard, AutoRefreshControl } from "./features/bus-arrivals/
 import { BusStopSearchComboBox } from "./features/search-bar";
 import { useBusStopsStore } from "./features/search-bar/stores";
 import { FavoriteBusStops, useFavoritesStore } from "./features/favorites";
+import { NearbyBusStopsButton, NearestBusStopsDialog, useNearbyStore } from "./features/nearby-stops";
 
 const App = () => {
   const [selectedBusStopCode, setSelectedBusStopCode] = useState<string | undefined>(undefined);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     useBusStopsStore.getState().fetchBusStops();
@@ -16,6 +18,21 @@ const App = () => {
   const handleBusStopSelect = (code: string | undefined) => {
     setSelectedBusStopCode(code);
   };
+
+  const handleNearbyDialogOpen = (open: boolean) => {
+    setDialogOpen(open);
+
+    if (open) {
+      const busStops = useBusStopsStore.getState().busStops;
+      const { requestLocation, findNearestStops } = useNearbyStore.getState();
+
+      requestLocation()
+        .then(() => findNearestStops(busStops, 5))
+        .catch(() => {});
+    }
+  };
+
+  const { nearestStops, loadingLocation, locationError, retry } = useNearbyStore();
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6">
@@ -35,6 +52,7 @@ const App = () => {
             />
           </div>
           <AutoRefreshControl busStopCode={selectedBusStopCode} />
+          <NearbyBusStopsButton onOpenChange={handleNearbyDialogOpen} />
         </div>
 
         <FavoriteBusStops
@@ -43,6 +61,18 @@ const App = () => {
         />
 
         <BusStopArrivalCard busStopCode={selectedBusStopCode} />
+
+        <NearestBusStopsDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          nearestStops={nearestStops}
+          loading={loadingLocation}
+          error={locationError}
+          onBusStopSelect={(code) => {
+            handleBusStopSelect(code);
+          }}
+          onRetry={retry}
+        />
       </div>
     </div>
   );
