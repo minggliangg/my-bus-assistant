@@ -202,4 +202,28 @@ describe("AutoRefreshControl", () => {
       });
     });
   });
+
+  // Responsive
+  describe("Responsive", () => {
+    test("label has responsive classes to hide on small screens", () => {
+      renderWithProviders(<AutoRefreshControl busStopCode="83139" />);
+
+      const button = screen.getByRole("button", { name: /start auto-refresh/i });
+      const label = button.querySelector("span.font-medium");
+
+      expect(label).toHaveClass("hidden");
+      expect(label).toHaveClass("sm:block");
+    });
+
+    test("icon remains visible regardless of screen size", () => {
+      renderWithProviders(<AutoRefreshControl busStopCode="83139" />);
+
+      const button = screen.getByRole("button", { name: /start auto-refresh/i });
+      const icon = button.querySelector("svg");
+
+      expect(icon).toBeInTheDocument();
+      // Icon should not have responsive hiding classes
+      expect(icon).not.toHaveClass("hidden");
+    });
+  });
 });

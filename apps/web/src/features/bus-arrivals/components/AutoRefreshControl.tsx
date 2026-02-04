@@ -63,7 +63,7 @@ export const AutoRefreshControl = ({
       ) : (
         <PlayCircle className="h-4 w-4" />
       )}
-      <span className="text-sm font-medium">
+      <span className="hidden text-sm font-medium sm:block">
         {isAutoRefreshEnabled ? "Stop" : "Auto"}
       </span>
 

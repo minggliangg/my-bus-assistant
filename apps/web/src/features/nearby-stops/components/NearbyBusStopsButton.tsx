@@ -30,7 +30,7 @@ export const NearbyBusStopsButton = ({
       aria-busy={loadingLocation}
     >
       <Navigation className="h-4 w-4" />
-      <span className="text-sm font-medium">Nearby</span>
+      <span className="hidden text-sm font-medium sm:block">Nearby</span>
     </button>
   );
 };

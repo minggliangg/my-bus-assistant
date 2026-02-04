@@ -92,4 +92,27 @@ describe("NearbyBusStopsButton", () => {
     const button = screen.getByRole("button");
     expect(button).toHaveClass("custom-class");
   });
+
+  describe("Responsive", () => {
+    it("label has responsive classes to hide on small screens", () => {
+      render(<NearbyBusStopsButton onOpenChange={mockOnOpenChange} />);
+
+      const button = screen.getByRole("button");
+      const label = button.querySelector("span.font-medium");
+
+      expect(label).toHaveClass("hidden");
+      expect(label).toHaveClass("sm:block");
+    });
+
+    it("icon remains visible regardless of screen size", () => {
+      render(<NearbyBusStopsButton onOpenChange={mockOnOpenChange} />);
+
+      const button = screen.getByRole("button");
+      const icon = button.querySelector("svg");
+
+      expect(icon).toBeInTheDocument();
+      // Icon should not have responsive hiding classes
+      expect(icon).not.toHaveClass("hidden");
+    });
+  });
 });
