@@ -20,6 +20,7 @@ import {
   getArrivalInMinutes,
   type BusService,
 } from "../models/bus-arrivals-model";
+import { getOperatorBadgeColors, getOperatorFullName } from "../utils";
 import useBusStore, { type ChangedField } from "../stores/useBusStopStore";
 
 interface BusStopArrivalCardProps {
@@ -180,7 +181,12 @@ const BusServiceRow = ({
       {/* Service Number */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <div
+            className={cn(
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+              getOperatorBadgeColors(service.operator)
+            )}
+          >
             <span className="text-sm font-bold">{service.serviceNo}</span>
           </div>
           {hasChanges && (
@@ -192,7 +198,7 @@ const BusServiceRow = ({
             </div>
           )}
           <span className="text-xs text-muted-foreground">
-            {service.operator}
+            {getOperatorFullName(service.operator)}
           </span>
         </div>
       </div>

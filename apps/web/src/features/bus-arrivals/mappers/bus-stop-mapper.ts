@@ -7,6 +7,7 @@ import type {
   BusArrival,
   BusFeature,
   BusLoad,
+  BusOperator,
   BusService,
   BusStop,
   BusType,
@@ -31,7 +32,7 @@ const mapBusArrival = (dto: BusDTO): BusArrival | null => {
 
 const mapBusService = (dto: BusServiceDTO): BusService => ({
   serviceNo: dto.ServiceNo,
-  operator: dto.Operator,
+  operator: dto.Operator as BusOperator,
   nextBus: mapBusArrival(dto.NextBus),
   nextBus2: mapBusArrival(dto.NextBus2),
   nextBus3: mapBusArrival(dto.NextBus3),

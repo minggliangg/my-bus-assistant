@@ -3,6 +3,7 @@
 export type BusLoad = "SEA" | "SDA" | "LSD";
 export type BusFeature = "WAB" | "";
 export type BusType = "SD" | "DD" | "BD";
+export type BusOperator = "SBST" | "SMRT" | "TTS" | "GAS";
 
 export interface BusArrival {
   originCode: string;
@@ -20,7 +21,7 @@ export interface BusArrival {
 
 export interface BusService {
   serviceNo: string;
-  operator: string;
+  operator: BusOperator;
   nextBus: BusArrival | null;
   nextBus2: BusArrival | null;
   nextBus3: BusArrival | null;

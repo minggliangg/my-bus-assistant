@@ -131,12 +131,12 @@ describe("BusStopCard", () => {
       });
     });
 
-    test("renders operator name", async () => {
+    test("renders full operator names", async () => {
       renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
-        expect(screen.getByText("SBST")).toBeInTheDocument();
-        expect(screen.getByText("SMRT")).toBeInTheDocument();
+        expect(screen.getByText("SBS Transit")).toBeInTheDocument();
+        expect(screen.getByText("SMRT Corporation")).toBeInTheDocument();
       });
     });
 
