@@ -12,7 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { X, Loader2, MapPin } from "lucide-react";
+import { Loader2, MapPin, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useBusStopsStore } from "../stores";
 
@@ -87,83 +87,85 @@ export const BusStopSearchComboBox = ({
             aria-expanded={open}
             className={`w-full justify-between ${className ?? ""} ${selectedStop ? "pr-10" : ""}`}
           >
-            {selectedStop
-              ? `${selectedStop.busStopCode} - ${selectedStop.description}`
-              : "Search bus stops..."}
+            <span className="truncate">
+              {selectedStop
+                ? `${selectedStop.busStopCode} - ${selectedStop.description}`
+                : "Search bus stops..."}
+            </span>
           </Button>
         </PopoverTrigger>
 
         <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] sm:w-[350px] md:w-[400px] p-0"
+          className="w-(--radix-popover-trigger-width) sm:w-[350px] md:w-[400px] p-0"
           align="start"
           sideOffset={4}
         >
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder="Search by stop number or street..."
-            value={searchQuery}
-            onValueChange={setSearchQuery}
-          />
+          <Command shouldFilter={false}>
+            <CommandInput
+              placeholder="Search by stop number or street..."
+              value={searchQuery}
+              onValueChange={setSearchQuery}
+            />
 
-          <CommandList>
-            {loading && (
-              <CommandItem disabled>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Loading bus stops...
-              </CommandItem>
-            )}
+            <CommandList>
+              {loading && (
+                <CommandItem disabled>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading bus stops...
+                </CommandItem>
+              )}
 
-            {error && (
-              <div className="py-6 px-4 text-center">
-                <p className="text-sm text-destructive">{error}</p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => void retry()}
-                  className="mt-2"
-                >
-                  Retry
-                </Button>
-              </div>
-            )}
-
-            {!loading && !error && filteredStops.length === 0 && (
-              <CommandEmpty>
-                <div className="py-6 text-center text-sm">
-                  <p className="text-muted-foreground">No bus stops found.</p>
-                  <p className="text-xs text-muted-foreground/70 mt-1">
-                    Try searching by bus stop code or street name
-                  </p>
-                </div>
-              </CommandEmpty>
-            )}
-
-            {!loading && !error && filteredStops.length > 0 && (
-              <CommandGroup>
-                {filteredStops.map((stop) => (
-                  <CommandItem
-                    key={stop.busStopCode}
-                    value={stop.busStopCode}
-                    onSelect={() => handleSelect(stop.busStopCode)}
+              {error && (
+                <div className="py-6 px-4 text-center">
+                  <p className="text-sm text-destructive">{error}</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void retry()}
+                    className="mt-2"
                   >
-                    <div className="flex items-start gap-3 w-full">
-                      <MapPin className="h-4 w-4 mt-1 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-sm">
-                          {highlightMatch(stop.busStopCode, debouncedQuery)}
-                        </div>
-                        <div className="text-sm text-muted-foreground truncate">
-                          {highlightMatch(stop.description, debouncedQuery)}
-                        </div>
-                        <div className="text-xs text-muted-foreground/70 truncate">
-                          {highlightMatch(stop.roadName, debouncedQuery)}
+                    Retry
+                  </Button>
+                </div>
+              )}
+
+              {!loading && !error && filteredStops.length === 0 && (
+                <CommandEmpty>
+                  <div className="py-6 text-center text-sm">
+                    <p className="text-muted-foreground">No bus stops found.</p>
+                    <p className="text-xs text-muted-foreground/70 mt-1">
+                      Try searching by bus stop code or street name
+                    </p>
+                  </div>
+                </CommandEmpty>
+              )}
+
+              {!loading && !error && filteredStops.length > 0 && (
+                <CommandGroup>
+                  {filteredStops.map((stop) => (
+                    <CommandItem
+                      key={stop.busStopCode}
+                      value={stop.busStopCode}
+                      onSelect={() => handleSelect(stop.busStopCode)}
+                    >
+                      <div className="flex items-start gap-3 w-full">
+                        <MapPin className="h-4 w-4 mt-1 text-muted-foreground shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm">
+                            {highlightMatch(stop.busStopCode, debouncedQuery)}
+                          </div>
+                          <div className="text-sm text-muted-foreground truncate">
+                            {highlightMatch(stop.description, debouncedQuery)}
+                          </div>
+                          <div className="text-xs text-muted-foreground/70 truncate">
+                            {highlightMatch(stop.roadName, debouncedQuery)}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
             </CommandList>
           </Command>
         </PopoverContent>

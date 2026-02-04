@@ -180,7 +180,7 @@ const BusServiceRow = ({
     <div className="rounded-lg border bg-card p-3 sm:p-4 space-y-3">
       {/* Service Number */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <div
             className={cn(
               "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
@@ -190,14 +190,14 @@ const BusServiceRow = ({
             <span className="text-sm font-bold">{service.serviceNo}</span>
           </div>
           {hasChanges && (
-            <div className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-1">
+            <div className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 shrink-0">
               <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
               <span className="text-xs text-green-700 font-medium">
                 Updated
               </span>
             </div>
           )}
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground truncate">
             {getOperatorFullName(service.operator)}
           </span>
         </div>
@@ -205,10 +205,10 @@ const BusServiceRow = ({
 
       {/* Route Info */}
       {hasRoute && (
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <span>{firstArrival?.originName ?? firstArrival?.originCode}</span>
-          <span>→</span>
-          <span>{firstArrival?.destinationName ?? firstArrival?.destinationCode}</span>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+          <span className="truncate shrink min-w-0">{firstArrival?.originName ?? firstArrival?.originCode}</span>
+          <span className="shrink-0">→</span>
+          <span className="truncate shrink min-w-0">{firstArrival?.destinationName ?? firstArrival?.destinationCode}</span>
         </div>
       )}
 
@@ -249,7 +249,7 @@ const BusServiceRow = ({
                   </span>
                 </div>
 
-                <div className="flex items-center justify-end gap-1.5 min-w-0">
+                <div className="flex items-center justify-end gap-1 sm:gap-1.5 min-w-0">
                   <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground shrink-0">
                     {getLoadBadge(arrival.load)}
@@ -277,21 +277,24 @@ const getLoadBadge = (load: string): string => {
 const getBusTypeBadge = (type: string) => {
   const busTypes: Record<
     string,
-    { label: string; icon: React.ReactNode; variant: string }
+    { label: string; shortLabel: string; icon: React.ReactNode; variant: string }
   > = {
     DD: {
       label: "Double",
+      shortLabel: "DD",
       icon: <Bus className="h-3 w-3" />,
       variant:
         "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
     },
     SD: {
       label: "Single",
+      shortLabel: "SD",
       icon: <Bus className="h-3 w-3" />,
       variant: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
     },
     BD: {
       label: "Bendy",
+      shortLabel: "BD",
       icon: <ArrowUpDown className="h-3 w-3" />,
       variant:
         "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
@@ -303,10 +306,11 @@ const getBusTypeBadge = (type: string) => {
 
   return (
     <div
-      className={`flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${busType.variant}`}
+      className={`flex items-center gap-1 rounded-md px-1.5 sm:px-2 py-0.5 text-xs font-medium ${busType.variant}`}
     >
       {busType.icon}
-      <span>{busType.label}</span>
+      <span className="hidden sm:inline">{busType.label}</span>
+      <span className="sm:hidden">{busType.shortLabel}</span>
     </div>
   );
 };
