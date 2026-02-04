@@ -7,17 +7,15 @@ import useNearbyStore from "./features/nearby-stops/stores/useNearbyStore";
 import * as favoritesDb from "@/lib/storage/favorites-db";
 
 // Helper to mock geolocation safely
-// Store real geolocation reference before any mocking
-const realGeolocation = navigator.geolocation;
-
 function mockGeolocation(implementation: Geolocation) {
   // Always restore mocks first to clear any previous spies
   vi.restoreAllMocks();
 
   // Delete any own property we've added
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (navigator as any).geolocation;
-  } catch (e) {
+  } catch {
     // Ignore errors
   }
 

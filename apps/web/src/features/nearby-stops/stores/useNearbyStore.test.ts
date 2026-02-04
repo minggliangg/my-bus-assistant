@@ -1,19 +1,17 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import useNearbyStore from "./useNearbyStore";
 import type { BusStopSearchModel } from "@/features/search-bar/models/bus-stops-model";
 
 // Helper to mock geolocation safely
-// Store real geolocation reference before any mocking
-const realGeolocation = navigator.geolocation;
-
 function mockGeolocation(implementation: Geolocation | undefined) {
   // Always restore mocks first to clear any previous spies
   vi.restoreAllMocks();
 
   // Delete any own property we've added
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (navigator as any).geolocation;
-  } catch (e) {
+  } catch {
     // Ignore errors
   }
 
@@ -21,7 +19,7 @@ function mockGeolocation(implementation: Geolocation | undefined) {
   Object.defineProperty(navigator, "geolocation", {
     configurable: true,
     enumerable: true,
-    value: implementation || realGeolocation,
+    value: implementation ?? navigator.geolocation,
   });
 }
 
@@ -74,6 +72,7 @@ describe("useNearbyStore", () => {
 
   it("should handle permission denied error", async () => {
     const mockError = new Error("Permission denied");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (mockError as any).name = "PermissionDeniedError";
 
     mockGeolocation({
@@ -91,6 +90,7 @@ describe("useNearbyStore", () => {
 
   it("should handle timeout error", async () => {
     const mockError = new Error("Timeout");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (mockError as any).name = "TimeoutError";
 
     mockGeolocation({

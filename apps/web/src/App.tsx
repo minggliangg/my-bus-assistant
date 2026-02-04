@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import "./App.css";
 import { BusStopArrivalCard, AutoRefreshControl } from "./features/bus-arrivals/components";
 import { BusStopSearchComboBox } from "./features/search-bar";
@@ -32,7 +32,13 @@ const App = () => {
     }
   };
 
-  const { nearestStops, loadingLocation, locationError, retry } = useNearbyStore();
+  const { nearestStops, loadingLocation, locationError, retry, location } = useNearbyStore();
+
+  // Memoize userLocation to prevent unnecessary map re-renders
+  const userLocation = useMemo(
+    () => (location ? { latitude: location.latitude, longitude: location.longitude } : null),
+    [location],
+  );
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6">
@@ -68,6 +74,7 @@ const App = () => {
           nearestStops={nearestStops}
           loading={loadingLocation}
           error={locationError}
+          userLocation={userLocation}
           onBusStopSelect={(code) => {
             handleBusStopSelect(code);
           }}
