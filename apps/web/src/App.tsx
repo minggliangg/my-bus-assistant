@@ -5,6 +5,7 @@ import { BusStopSearchComboBox } from "./features/search-bar";
 import { useBusStopsStore } from "./features/search-bar/stores";
 import { FavoriteBusStops, useFavoritesStore } from "./features/favorites";
 import { NearbyBusStopsButton, NearestBusStopsDialog, useNearbyStore } from "./features/nearby-stops";
+import { useThemeStore, ThemeToggle } from "./features/theme";
 
 const App = () => {
   const [selectedBusStopCode, setSelectedBusStopCode] = useState<string | undefined>(undefined);
@@ -13,6 +14,9 @@ const App = () => {
   useEffect(() => {
     useBusStopsStore.getState().fetchBusStops();
     useFavoritesStore.getState().loadFavorites();
+    const cleanupTheme = useThemeStore.getState().initializeTheme();
+
+    return cleanupTheme;
   }, []);
 
   const handleBusStopSelect = (code: string | undefined) => {
@@ -43,11 +47,16 @@ const App = () => {
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6">
       <div className="mx-auto max-w-2xl space-y-6">
-        <header className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">My Bus Assistant</h1>
-          <p className="text-muted-foreground">
-            Real-time bus arrival information at your fingertips
-          </p>
+        <header className="relative">
+          <div className="flex items-start justify-center">
+            <div className="space-y-2 text-center">
+              <h1 className="text-3xl font-bold tracking-tight">My Bus Assistant</h1>
+              <p className="text-muted-foreground">
+                Real-time bus arrival information at your fingertips
+              </p>
+            </div>
+          </div>
+          <ThemeToggle />
         </header>
 
         <div className="flex gap-2 items-start">

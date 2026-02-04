@@ -1,10 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import App from "./App";
 import useBusStopsStore from "./features/search-bar/stores/useBusStopsStore";
 import useNearbyStore from "./features/nearby-stops/stores/useNearbyStore";
 import * as favoritesDb from "@/lib/storage/favorites-db";
+
+const originalMatchMedia = window.matchMedia;
 
 // Helper to mock geolocation safely
 function mockGeolocation(implementation: Geolocation) {
@@ -32,6 +34,21 @@ describe("App", () => {
     vi.clearAllMocks();
     useBusStopsStore.getState().reset();
     useNearbyStore.getState().clearLocation();
+    
+    window.matchMedia = vi.fn().mockImplementation((query) => ({
+      matches: query === '(prefers-color-scheme: dark)',
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })) as unknown as typeof window.matchMedia;
+  });
+
+  afterEach(() => {
+    window.matchMedia = originalMatchMedia;
   });
 
   it("renders app title", () => {
@@ -124,5 +141,26 @@ describe("App", () => {
     await waitFor(() => {
       expect(useNearbyStore.getState().location).not.toBeNull();
     });
+  });
+
+  it("should clean up theme listener on unmount", () => {
+    const removeEventListenerSpy = vi.fn();
+    
+    window.matchMedia = vi.fn().mockImplementation(() => ({
+      matches: true,
+      media: '(prefers-color-scheme: dark)',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: removeEventListenerSpy,
+      dispatchEvent: vi.fn(),
+    })) as unknown as typeof window.matchMedia;
+
+    const { unmount } = render(<App />);
+
+    unmount();
+
+    expect(removeEventListenerSpy).toHaveBeenCalled();
   });
 });

@@ -114,6 +114,14 @@ This ensures API contracts don't leak into business logic.
 - **Variants**: `class-variance-authority` for component variants
 - **Icons**: `lucide-react`
 
+#### Tailwind CSS v4 Syntax
+Tailwind CSS v4 includes built-in linting that flags outdated selector syntax. When writing arbitrary selectors (especially for child element targeting), use the newer syntax:
+
+**Old syntax (v3 style)**: `[&_[cmdk-group-heading]]:font-medium`
+**New syntax (v4)**: `**:[[cmdk-group-heading]]:font-medium`
+
+The `**:` prefix replaces the older `[&_...]` pattern for better readability and consistency. If you see linting warnings about this, update the selectors to use the new syntax.
+
 #### Testing Setup
 - **Framework**: Vitest with jsdom environment
 - **Mocking**: MSW server configured in `apps/web/src/mocks/server.ts`

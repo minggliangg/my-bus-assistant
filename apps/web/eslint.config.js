@@ -15,6 +15,9 @@ export default defineConfig([
       reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
     ],
+    rules: {
+      'no-empty': 'off',
+    },
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
