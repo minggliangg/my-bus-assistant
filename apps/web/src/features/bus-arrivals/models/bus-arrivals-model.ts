@@ -14,6 +14,8 @@ export interface BusArrival {
   load: BusLoad;
   feature: BusFeature;
   type: BusType;
+  originName?: string;
+  destinationName?: string;
 }
 
 export interface BusService {

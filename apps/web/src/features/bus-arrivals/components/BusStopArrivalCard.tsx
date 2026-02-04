@@ -172,6 +172,9 @@ const BusServiceRow = ({
     (field) => field.serviceNo === service.serviceNo,
   );
 
+  const firstArrival = service.nextBus || service.nextBus2 || service.nextBus3;
+  const hasRoute = firstArrival?.originName || firstArrival?.destinationName;
+
   return (
     <div className="rounded-lg border bg-card p-3 sm:p-4 space-y-3">
       {/* Service Number */}
@@ -193,6 +196,15 @@ const BusServiceRow = ({
           </span>
         </div>
       </div>
+
+      {/* Route Info */}
+      {hasRoute && (
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span>{firstArrival?.originName ?? firstArrival?.originCode}</span>
+          <span>→</span>
+          <span>{firstArrival?.destinationName ?? firstArrival?.destinationCode}</span>
+        </div>
+      )}
 
       {/* Arrivals */}
       {arrivals.length === 0 ? (

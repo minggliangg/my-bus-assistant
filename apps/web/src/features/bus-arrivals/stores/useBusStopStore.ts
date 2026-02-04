@@ -6,6 +6,7 @@ import {
   type BusService,
   type BusStop,
 } from "../models/bus-arrivals-model";
+import { resolveBusStopNames } from "../utils/resolve-bus-stop-names";
 
 interface ChangedField {
   serviceNo: string;
@@ -238,7 +239,8 @@ const useBusStore = create<BusStopStore>((set, get) => {
         }
 
         const dto: BusArrivalDTO = await response.json();
-        const busStop = mapBusStopDtoToModel(dto);
+        const mappedBusStop = mapBusStopDtoToModel(dto);
+        const busStop = resolveBusStopNames(mappedBusStop);
         const now = Date.now();
 
         const changedFields = currentState.busStop
