@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import type { NearbyBusStop } from "@/features/nearby-stops/models/nearby-stops-model";
+import { cn } from "@/lib/utils";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { cn } from "@/lib/utils";
-import type { NearbyBusStop } from "@/features/nearby-stops/models/nearby-stops-model";
+import { useEffect, useRef, useState } from "react";
 
 interface MapProps {
   className?: string;
@@ -60,7 +60,10 @@ export const Map = ({
 
     const initialState = userLocation
       ? {
-          center: [userLocation.longitude, userLocation.latitude] as [number, number],
+          center: [userLocation.longitude, userLocation.latitude] as [
+            number,
+            number,
+          ],
           zoom: 15,
         }
       : {
@@ -202,26 +205,27 @@ export const Map = ({
     };
   }, [userLocation, mapLoaded]);
 
-  // Update bus stop markers
+  // Create bus stop markers (only when busStops change)
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
     const mapInstance = map.current;
     clearMarkers();
 
-    // Sort so selected marker is rendered last (on top)
-    const sortedStops = [...busStops].sort((a, b) =>
-      a.busStopCode === selectedStopCode ? 1 : b.busStopCode === selectedStopCode ? -1 : 0
-    );
-
-    sortedStops.forEach((stop) => {
-      const isSelected = stop.busStopCode === selectedStopCode;
-
+    busStops.forEach((stop) => {
       const el = document.createElement("button");
       el.type = "button";
       el.className = cn(
-        "bus-stop-marker flex items-end justify-center transition-transform hover:scale-110 origin-bottom focus:outline-none",
+        "bus-stop-marker flex items-end justify-center transition-shadow focus:outline-none",
       );
+      el.setAttribute("data-stop-code", stop.busStopCode);
+      el.style.filter = "drop-shadow(0 0 0 transparent)";
+      el.addEventListener("mouseenter", () => {
+        el.style.filter = "drop-shadow(0 0 8px rgba(0, 0, 0, 0.3))";
+      });
+      el.addEventListener("mouseleave", () => {
+        el.style.filter = "drop-shadow(0 0 0 transparent)";
+      });
 
       const pinEl = document.createElement("div");
       pinEl.className = "relative flex flex-col items-center";
@@ -231,12 +235,13 @@ export const Map = ({
       svg.setAttribute("viewBox", "0 0 24 24");
       svg.setAttribute("width", "32");
       svg.setAttribute("height", "32");
-      svg.setAttribute("class", cn(
-        "drop-shadow-md",
-        isSelected ? "text-primary" : "text-foreground"
-      ));
+      svg.setAttribute("class", cn("drop-shadow-md", "text-foreground"));
+      svg.setAttribute("data-role", "pin-svg");
 
-      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      const path = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "path",
+      );
       path.setAttribute(
         "d",
         "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z",
@@ -259,11 +264,10 @@ export const Map = ({
       const labelEl = document.createElement("div");
       labelEl.className = cn(
         "-mt-1 mb-1 px-1.5 py-0.5 rounded text-xs font-bold font-mono whitespace-nowrap",
-        isSelected
-          ? "bg-primary text-primary-foreground"
-          : "bg-background text-foreground border border-border",
+        "bg-background text-foreground border border-border",
       );
       labelEl.textContent = stop.busStopCode;
+      labelEl.setAttribute("data-role", "label");
 
       pinEl.appendChild(labelEl);
       pinEl.appendChild(svg);
@@ -287,7 +291,42 @@ export const Map = ({
     return () => {
       clearMarkers();
     };
-  }, [busStops, mapLoaded, onBusStopClick, selectedStopCode]);
+  }, [busStops, mapLoaded, onBusStopClick]);
+
+  // Update selected marker styling (without recreating markers)
+  useEffect(() => {
+    markersRef.current.forEach((marker) => {
+      const el = marker.getElement();
+      const stopCode = el.getAttribute("data-stop-code");
+      const isSelected = stopCode === selectedStopCode;
+
+      const labelEl = el.querySelector("[data-role='label']");
+      const svg = el.querySelector("[data-role='pin-svg']");
+
+      if (labelEl) {
+        labelEl.className = cn(
+          "-mt-1 mb-1 px-1.5 py-0.5 rounded text-xs font-bold font-mono whitespace-nowrap",
+          isSelected
+            ? "bg-primary text-primary-foreground"
+            : "bg-background text-foreground border border-border",
+        );
+      }
+
+      if (svg) {
+        svg.setAttribute(
+          "class",
+          cn("drop-shadow-md", isSelected ? "text-primary" : "text-foreground"),
+        );
+      }
+
+      // Reorder z-index so selected marker is on top
+      if (isSelected) {
+        el.style.zIndex = "1000";
+      } else {
+        el.style.zIndex = "";
+      }
+    });
+  }, [selectedStopCode]);
 
   return (
     <div className="relative w-full h-full">
