@@ -1,5 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { NearbyBusStop } from "@/features/nearby-stops/models/nearby-stops-model";
+import { describe, expect, it } from "vitest";
 
 /**
  * Map Component Hover Behavior Tests
@@ -12,29 +11,11 @@ import type { NearbyBusStop } from "@/features/nearby-stops/models/nearby-stops-
  */
 
 describe("Map Component - Hover Behavior & Rendering", () => {
-  const mockBusStops: NearbyBusStop[] = [
-    {
-      busStopCode: "01012",
-      roadName: "Victoria St",
-      description: "Hotel Grand Pacific",
-      latitude: 1.296848,
-      longitude: 103.852535,
-      distance: 120,
-    },
-    {
-      busStopCode: "01013",
-      roadName: "Victoria St",
-      description: "St Joseph's Church",
-      latitude: 1.297928,
-      longitude: 103.853321,
-      distance: 250,
-    },
-  ];
-
   describe("Marker HTML Structure and Classes", () => {
     it("should not include hover:scale in marker button classes", () => {
       // The marker button is created with these classes
-      const markerClasses = "bus-stop-marker flex items-end justify-center transition-shadow focus:outline-none";
+      const markerClasses =
+        "bus-stop-marker flex items-end justify-center transition-shadow focus:outline-none";
 
       // Verify no scaling transform is applied
       expect(markerClasses).not.toContain("scale");
@@ -43,14 +24,16 @@ describe("Map Component - Hover Behavior & Rendering", () => {
     });
 
     it("should include transition-shadow for smooth filter animation", () => {
-      const markerClasses = "bus-stop-marker flex items-end justify-center transition-shadow focus:outline-none";
+      const markerClasses =
+        "bus-stop-marker flex items-end justify-center transition-shadow focus:outline-none";
 
       // Verify smooth transition is set up for filter changes
       expect(markerClasses).toContain("transition-shadow");
     });
 
     it("should use filter property instead of transform for hover effects", () => {
-      const markerClasses = "bus-stop-marker flex items-end justify-center transition-shadow focus:outline-none";
+      const markerClasses =
+        "bus-stop-marker flex items-end justify-center transition-shadow focus:outline-none";
 
       // Verify we're using transitions that won't cause position shifts
       // Filter-based effects don't affect element bounding box

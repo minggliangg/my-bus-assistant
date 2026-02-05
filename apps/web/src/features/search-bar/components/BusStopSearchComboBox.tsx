@@ -13,7 +13,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Loader2, MapPin, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useBusStopsStore } from "../stores";
 
 interface BusStopSearchComboBoxProps {
@@ -36,23 +37,6 @@ const useDebounce = <T,>(value: T, delay: number): T => {
   return debouncedValue;
 };
 
-const highlightMatch = (text: string, query: string): React.ReactNode => {
-  if (!query.trim()) return text;
-
-  const parts = text.split(
-    new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"),
-  );
-  return parts.map((part, i) =>
-    part.toLowerCase() === query.toLowerCase() ? (
-      <mark key={i} className="bg-accent/50 text-accent-foreground">
-        {part}
-      </mark>
-    ) : (
-      part
-    ),
-  );
-};
-
 export const BusStopSearchComboBox = ({
   onBusStopSelect,
   defaultValue,
@@ -62,14 +46,41 @@ export const BusStopSearchComboBox = ({
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedQuery = useDebounce(searchQuery, 300);
 
-  const { busStops, loading, error, searchBusStops, retry } =
-    useBusStopsStore();
+  const { busStops, loading, error, searchBusStops, retry } = useBusStopsStore(
+    useShallow((state) => ({
+      busStops: state.busStops,
+      loading: state.loading,
+      error: state.error,
+      searchBusStops: state.searchBusStops,
+      retry: state.retry,
+    })),
+  );
 
   const filteredStops = searchBusStops(debouncedQuery);
 
   const selectedStop = busStops.find(
     (stop) => stop.busStopCode === defaultValue,
   );
+
+  const highlightRegex = useMemo(() => {
+    const escapedQuery = debouncedQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return debouncedQuery.trim() ? new RegExp(`(${escapedQuery})`, "gi") : null;
+  }, [debouncedQuery]);
+
+  const highlightMatch = (text: string): ReactNode => {
+    if (!debouncedQuery.trim() || !highlightRegex) return text;
+
+    const parts = text.split(highlightRegex);
+    return parts.map((part, i) =>
+      part.toLowerCase() === debouncedQuery.toLowerCase() ? (
+        <mark key={i} className="bg-accent/50 text-accent-foreground">
+          {part}
+        </mark>
+      ) : (
+        part
+      ),
+    );
+  };
 
   const handleSelect = (busStopCode: string) => {
     onBusStopSelect(busStopCode);
@@ -152,13 +163,13 @@ export const BusStopSearchComboBox = ({
                         <MapPin className="h-4 w-4 mt-1 text-muted-foreground shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-sm">
-                            {highlightMatch(stop.busStopCode, debouncedQuery)}
+                            {highlightMatch(stop.busStopCode)}
                           </div>
                           <div className="text-sm text-muted-foreground truncate">
-                            {highlightMatch(stop.description, debouncedQuery)}
+                            {highlightMatch(stop.description)}
                           </div>
                           <div className="text-xs text-muted-foreground/70 truncate">
-                            {highlightMatch(stop.roadName, debouncedQuery)}
+                            {highlightMatch(stop.roadName)}
                           </div>
                         </div>
                       </div>

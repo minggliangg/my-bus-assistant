@@ -1,17 +1,11 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  test,
-  vi,
-} from "vitest";
+import type { ReactElement } from "react";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import useBusStore from "../stores/useBusStopStore";
 import { BusStopArrivalCard } from "./BusStopArrivalCard";
 
 // Helper to render with providers
-const renderWithProviders = (ui: React.ReactElement) => {
+const renderWithProviders = (ui: ReactElement) => {
   return render(ui);
 };
 

@@ -1,15 +1,15 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import * as favoritesDb from "@/lib/storage/favorites-db";
 import { render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
-import useBusStopsStore from "./features/search-bar/stores/useBusStopsStore";
 import useNearbyStore from "./features/nearby-stops/stores/useNearbyStore";
-import * as favoritesDb from "@/lib/storage/favorites-db";
+import useBusStopsStore from "./features/search-bar/stores/useBusStopsStore";
 
 const originalMatchMedia = window.matchMedia;
 
 // Helper to mock geolocation safely
-function mockGeolocation(implementation: Geolocation) {
+const mockGeolocation = (implementation: Geolocation) => {
   // Always restore mocks first to clear any previous spies
   vi.restoreAllMocks();
 
@@ -27,16 +27,16 @@ function mockGeolocation(implementation: Geolocation) {
     enumerable: true,
     value: implementation,
   });
-}
+};
 
 describe("App", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useBusStopsStore.getState().reset();
     useNearbyStore.getState().clearLocation();
-    
+
     window.matchMedia = vi.fn().mockImplementation((query) => ({
-      matches: query === '(prefers-color-scheme: dark)',
+      matches: query === "(prefers-color-scheme: dark)",
       media: query,
       onchange: null,
       addListener: vi.fn(),
@@ -90,7 +90,9 @@ describe("App", () => {
     };
 
     mockGeolocation({
-      getCurrentPosition: vi.fn((success) => success(mockPosition as GeolocationPosition)),
+      getCurrentPosition: vi.fn((success) =>
+        success(mockPosition as GeolocationPosition),
+      ),
       watchPosition: vi.fn(),
       clearWatch: vi.fn(),
     } as Geolocation);
@@ -126,7 +128,9 @@ describe("App", () => {
     };
 
     mockGeolocation({
-      getCurrentPosition: vi.fn((success) => success(mockPosition as GeolocationPosition)),
+      getCurrentPosition: vi.fn((success) =>
+        success(mockPosition as GeolocationPosition),
+      ),
       watchPosition: vi.fn(),
       clearWatch: vi.fn(),
     } as Geolocation);
@@ -145,10 +149,10 @@ describe("App", () => {
 
   it("should clean up theme listener on unmount", () => {
     const removeEventListenerSpy = vi.fn();
-    
+
     window.matchMedia = vi.fn().mockImplementation(() => ({
       matches: true,
-      media: '(prefers-color-scheme: dark)',
+      media: "(prefers-color-scheme: dark)",
       onchange: null,
       addListener: vi.fn(),
       removeListener: vi.fn(),

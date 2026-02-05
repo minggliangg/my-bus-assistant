@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import useNearbyStore from "./useNearbyStore";
 import type { BusStopSearchModel } from "@/features/search-bar/models/bus-stops-model";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import useNearbyStore from "./useNearbyStore";
 
 // Helper to mock geolocation safely
-function mockGeolocation(implementation: Geolocation | undefined) {
+const mockGeolocation = (implementation: Geolocation | undefined) => {
   // Always restore mocks first to clear any previous spies
   vi.restoreAllMocks();
 
@@ -21,7 +21,7 @@ function mockGeolocation(implementation: Geolocation | undefined) {
     enumerable: true,
     value: implementation ?? navigator.geolocation,
   });
-}
+};
 
 describe("useNearbyStore", () => {
   beforeEach(() => {
@@ -53,10 +53,12 @@ describe("useNearbyStore", () => {
     };
 
     mockGeolocation({
-        getCurrentPosition: vi.fn((success) => success(mockPosition as GeolocationPosition)),
-        watchPosition: vi.fn(),
-        clearWatch: vi.fn(),
-      });
+      getCurrentPosition: vi.fn((success) =>
+        success(mockPosition as GeolocationPosition),
+      ),
+      watchPosition: vi.fn(),
+      clearWatch: vi.fn(),
+    });
 
     await useNearbyStore.getState().requestLocation();
 
@@ -76,9 +78,9 @@ describe("useNearbyStore", () => {
     (mockError as any).name = "PermissionDeniedError";
 
     mockGeolocation({
-        getCurrentPosition: vi.fn((_, error) => error?.(mockError)),
-        watchPosition: vi.fn(),
-        clearWatch: vi.fn(),
+      getCurrentPosition: vi.fn((_, error) => error?.(mockError)),
+      watchPosition: vi.fn(),
+      clearWatch: vi.fn(),
     } as Geolocation);
 
     await expect(useNearbyStore.getState().requestLocation()).rejects.toThrow();
@@ -94,9 +96,9 @@ describe("useNearbyStore", () => {
     (mockError as any).name = "TimeoutError";
 
     mockGeolocation({
-        getCurrentPosition: vi.fn((_, error) => error?.(mockError)),
-        watchPosition: vi.fn(),
-        clearWatch: vi.fn(),
+      getCurrentPosition: vi.fn((_, error) => error?.(mockError)),
+      watchPosition: vi.fn(),
+      clearWatch: vi.fn(),
     } as Geolocation);
 
     await expect(useNearbyStore.getState().requestLocation()).rejects.toThrow();
@@ -131,13 +133,15 @@ describe("useNearbyStore", () => {
       timestamp: Date.now(),
     };
 
-    const getCurrentPositionSpy = vi.fn((success) => success(mockPosition as GeolocationPosition));
+    const getCurrentPositionSpy = vi.fn((success) =>
+      success(mockPosition as GeolocationPosition),
+    );
 
     mockGeolocation({
-        getCurrentPosition: getCurrentPositionSpy,
-        watchPosition: vi.fn(),
-        clearWatch: vi.fn(),
-      });
+      getCurrentPosition: getCurrentPositionSpy,
+      watchPosition: vi.fn(),
+      clearWatch: vi.fn(),
+    });
 
     await useNearbyStore.getState().requestLocation();
     await useNearbyStore.getState().requestLocation();
@@ -159,13 +163,15 @@ describe("useNearbyStore", () => {
       timestamp: Date.now() - 6 * 60 * 1000,
     };
 
-    const getCurrentPositionSpy = vi.fn((success) => success(mockPosition as GeolocationPosition));
+    const getCurrentPositionSpy = vi.fn((success) =>
+      success(mockPosition as GeolocationPosition),
+    );
 
     mockGeolocation({
-        getCurrentPosition: getCurrentPositionSpy,
-        watchPosition: vi.fn(),
-        clearWatch: vi.fn(),
-      });
+      getCurrentPosition: getCurrentPositionSpy,
+      watchPosition: vi.fn(),
+      clearWatch: vi.fn(),
+    });
 
     useNearbyStore.setState({
       location: {
@@ -263,10 +269,12 @@ describe("useNearbyStore", () => {
     };
 
     mockGeolocation({
-        getCurrentPosition: vi.fn((success) => success(mockPosition as GeolocationPosition)),
-        watchPosition: vi.fn(),
-        clearWatch: vi.fn(),
-      });
+      getCurrentPosition: vi.fn((success) =>
+        success(mockPosition as GeolocationPosition),
+      ),
+      watchPosition: vi.fn(),
+      clearWatch: vi.fn(),
+    });
 
     useNearbyStore.setState({ locationError: "Previous error" });
 

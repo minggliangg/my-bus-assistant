@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
 import "./App.css";
 import { BusStopArrivalCard, AutoRefreshControl } from "./features/bus-arrivals/components";
 import { BusStopSearchComboBox } from "./features/search-bar";
@@ -36,7 +37,15 @@ const App = () => {
     }
   };
 
-  const { nearestStops, loadingLocation, locationError, retry, location } = useNearbyStore();
+  const { nearestStops, loadingLocation, locationError, retry, location } = useNearbyStore(
+    useShallow((state) => ({
+      nearestStops: state.nearestStops,
+      loadingLocation: state.loadingLocation,
+      locationError: state.locationError,
+      retry: state.retry,
+      location: state.location,
+    }))
+  );
 
   // Memoize userLocation to prevent unnecessary map re-renders
   const userLocation = useMemo(

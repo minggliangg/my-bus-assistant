@@ -25,7 +25,7 @@ export const FavoriteToggleButton = ({
     >
       <Star
         className={cn(
-          "h-5 w-5 transition-all",
+          "h-5 w-5 transition-colors",
           favorited
             ? "fill-yellow-400 text-yellow-400"
             : "text-muted-foreground hover:text-yellow-400",

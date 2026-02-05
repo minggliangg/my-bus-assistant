@@ -107,9 +107,11 @@ export const Map = ({
     });
 
     // Listen for theme changes and update map style
+    let lastTheme = document.documentElement.classList.contains("dark");
     const observer = new MutationObserver(() => {
       const isDarkMode = document.documentElement.classList.contains("dark");
-      if (map.current) {
+      if (map.current && isDarkMode !== lastTheme) {
+        lastTheme = isDarkMode;
         map.current.setStyle(createMapStyle(isDarkMode));
       }
     });
@@ -217,15 +219,9 @@ export const Map = ({
       el.type = "button";
       el.className = cn(
         "bus-stop-marker flex items-end justify-center transition-shadow focus:outline-none",
+        "hover:drop-shadow-[0_0_8px_rgba(0,0,0,0.3)]",
       );
       el.setAttribute("data-stop-code", stop.busStopCode);
-      el.style.filter = "drop-shadow(0 0 0 transparent)";
-      el.addEventListener("mouseenter", () => {
-        el.style.filter = "drop-shadow(0 0 8px rgba(0, 0, 0, 0.3))";
-      });
-      el.addEventListener("mouseleave", () => {
-        el.style.filter = "drop-shadow(0 0 0 transparent)";
-      });
 
       const pinEl = document.createElement("div");
       pinEl.className = "relative flex flex-col items-center";
@@ -294,11 +290,26 @@ export const Map = ({
   }, [busStops, mapLoaded, onBusStopClick]);
 
   // Update selected marker styling (without recreating markers)
+  const previousSelectedRef = useRef<string | undefined>(undefined);
   useEffect(() => {
+    const previousSelected = previousSelectedRef.current;
+    const changedStops = new Set<string>();
+
+    if (previousSelected !== undefined && previousSelected !== selectedStopCode) {
+      changedStops.add(previousSelected);
+    }
+    if (selectedStopCode !== undefined && selectedStopCode !== previousSelected) {
+      changedStops.add(selectedStopCode);
+    }
+
     markersRef.current.forEach((marker) => {
       const el = marker.getElement();
+      if (!el) return;
       const stopCode = el.getAttribute("data-stop-code");
+      if (!stopCode) return;
       const isSelected = stopCode === selectedStopCode;
+
+      if (!changedStops.has(stopCode)) return;
 
       const labelEl = el.querySelector("[data-role='label']");
       const svg = el.querySelector("[data-role='pin-svg']");
@@ -319,13 +330,14 @@ export const Map = ({
         );
       }
 
-      // Reorder z-index so selected marker is on top
       if (isSelected) {
         el.style.zIndex = "1000";
       } else {
         el.style.zIndex = "";
       }
     });
+
+    previousSelectedRef.current = selectedStopCode;
   }, [selectedStopCode]);
 
   return (

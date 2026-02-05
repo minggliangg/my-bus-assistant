@@ -6,11 +6,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Check, Monitor, Moon, Sun } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
 import useThemeStore from "../stores/useThemeStore";
 
-export function ThemeToggle() {
-  const { theme, setTheme } = useThemeStore();
-  const { effectiveTheme } = useThemeStore();
+export const ThemeToggle = () => {
+  const { theme, setTheme, effectiveTheme } = useThemeStore(
+    useShallow((state) => ({
+      theme: state.theme,
+      setTheme: state.setTheme,
+      effectiveTheme: state.effectiveTheme,
+    })),
+  );
 
   const themes = [
     { value: "light" as const, label: "Light", icon: Sun },
@@ -53,4 +59,4 @@ export function ThemeToggle() {
       </DropdownMenu>
     </div>
   );
-}
+};

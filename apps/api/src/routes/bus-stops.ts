@@ -22,7 +22,7 @@ const busStopsCache: BusStopsCache = {
 let refreshPromise: Promise<void> | null = null;
 let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
 
-async function fetchAllBusStops(): Promise<BusStopDTO[]> {
+const fetchAllBusStops = async (): Promise<BusStopDTO[]> => {
   const allBusStops: BusStopDTO[] = [];
   let offset = 0;
   let pageCount = 0;
@@ -30,10 +30,9 @@ async function fetchAllBusStops(): Promise<BusStopDTO[]> {
   console.log("Fetching all bus stops from LTA DataMall...");
 
   while (pageCount < MAX_PAGES) {
-    const data = await fetchFromLTA<BusStopsDTO>(
-      "/ltaodataservice/BusStops",
-      { $skip: offset.toString() },
-    );
+    const data = await fetchFromLTA<BusStopsDTO>("/ltaodataservice/BusStops", {
+      $skip: offset.toString(),
+    });
 
     if (!data.value || data.value.length === 0) {
       break;
@@ -54,9 +53,9 @@ async function fetchAllBusStops(): Promise<BusStopDTO[]> {
   );
 
   return allBusStops;
-}
+};
 
-async function refreshBusStopsCache(): Promise<void> {
+const refreshBusStopsCache = async (): Promise<void> => {
   console.log("Background refreshing bus stops cache...");
   try {
     const freshData = await fetchAllBusStops();
@@ -66,18 +65,18 @@ async function refreshBusStopsCache(): Promise<void> {
   } catch (error) {
     console.error("Failed to refresh bus stops cache:", error);
   }
-}
+};
 
-function triggerBackgroundRefresh(): void {
+const triggerBackgroundRefresh = (): void => {
   if (refreshPromise) return;
 
   refreshPromise = refreshBusStopsCache().finally(() => {
     refreshPromise = null;
     scheduleBackgroundRefresh();
   });
-}
+};
 
-function scheduleBackgroundRefresh(): void {
+const scheduleBackgroundRefresh = (): void => {
   if (refreshTimeout) clearTimeout(refreshTimeout);
 
   const cacheAge = Date.now() - busStopsCache.timestamp;
@@ -86,7 +85,7 @@ function scheduleBackgroundRefresh(): void {
 
   const delay = Math.max(0, REFRESH_THRESHOLD_MS - cacheAge);
   refreshTimeout = setTimeout(triggerBackgroundRefresh, delay);
-}
+};
 
 /**
  * GET /api/ltaodataservice/BusStops

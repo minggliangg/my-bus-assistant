@@ -1,9 +1,9 @@
-export function calculateDistance(
+export const calculateDistance = (
   lat1: number,
   lon1: number,
   lat2: number,
   lon2: number,
-): number {
+): number => {
   const R = 6371e3;
   const φ1 = (lat1 * Math.PI) / 180;
   const φ2 = (lat2 * Math.PI) / 180;
@@ -16,11 +16,11 @@ export function calculateDistance(
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return R * c;
-}
+};
 
-export function formatDistance(meters: number): string {
+export const formatDistance = (meters: number): string => {
   if (meters < 1000) {
     return `${Math.round(meters)}m`;
   }
   return `${(meters / 1000).toFixed(1)}km`;
-}
+};

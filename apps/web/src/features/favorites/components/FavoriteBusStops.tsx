@@ -1,6 +1,7 @@
 import { Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useShallow } from "zustand/react/shallow";
 import { useFavoritesStore } from "../stores";
 import { useBusStopsStore } from "@/features/search-bar/stores";
 
@@ -15,8 +16,10 @@ export const FavoriteBusStops = ({
   onBusStopSelect,
   className,
 }: FavoriteBusStopsProps) => {
-  const { favorites } = useFavoritesStore();
-  const { getBusStopByCode } = useBusStopsStore();
+  const { favorites } = useFavoritesStore(
+    useShallow((state) => ({ favorites: state.favorites }))
+  );
+  const getBusStopByCode = useBusStopsStore((state) => state.getBusStopByCode);
 
   if (favorites.length === 0) {
     return (

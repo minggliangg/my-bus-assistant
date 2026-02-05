@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Loader2, PauseCircle, PlayCircle } from "lucide-react";
 import { useEffect } from "react";
+import { useShallow } from "zustand/react/shallow";
 import useBusStore from "../stores/useBusStopStore";
 
 interface AutoRefreshControlProps {
@@ -10,12 +11,13 @@ interface AutoRefreshControlProps {
 export const AutoRefreshControl = ({
   busStopCode,
 }: AutoRefreshControlProps) => {
-  const {
-    fetchBusArrivals,
-    isAutoRefreshEnabled,
-    isFetching,
-    toggleAutoRefresh,
-  } = useBusStore();
+  const { isAutoRefreshEnabled, isFetching } = useBusStore(
+    useShallow((state) => ({
+      isAutoRefreshEnabled: state.isAutoRefreshEnabled,
+      isFetching: state.isFetching,
+    }))
+  );
+  const toggleAutoRefresh = useBusStore((state) => state.toggleAutoRefresh);
 
   const THROTTLE_INTERVAL_MS = parseInt(
     import.meta.env.VITE_THROTTLE_INTERVAL_MS || "30000",
@@ -29,7 +31,7 @@ export const AutoRefreshControl = ({
 
     const intervalId = setInterval(() => {
       if (busStopCode) {
-        fetchBusArrivals(busStopCode);
+        useBusStore.getState().fetchBusArrivals(busStopCode);
       }
     }, AUTO_REFRESH_INTERVAL_MS);
 
@@ -37,7 +39,6 @@ export const AutoRefreshControl = ({
   }, [
     isAutoRefreshEnabled,
     busStopCode,
-    fetchBusArrivals,
     AUTO_REFRESH_INTERVAL_MS,
   ]);
 

@@ -21,7 +21,8 @@ import {
   Loader2,
   MapPin,
 } from "lucide-react";
-import { useEffect } from "react";
+import { memo, useEffect, type ReactNode } from "react";
+import { useShallow } from "zustand/react/shallow";
 import {
   formatArrivalTime,
   getArrivalInMinutes,
@@ -37,15 +38,18 @@ interface BusStopArrivalCardProps {
 export const BusStopArrivalCard = ({
   busStopCode,
 }: BusStopArrivalCardProps) => {
-  const {
-    busStop,
-    loading,
-    error,
-    fetchBusArrivals,
-    isFetching,
-    changedFields,
-    isStale,
-  } = useBusStore();
+  const { busStop, loading, error, changedFields, isStale, isFetching } =
+    useBusStore(
+      useShallow((state) => ({
+        busStop: state.busStop,
+        loading: state.loading,
+        error: state.error,
+        changedFields: state.changedFields,
+        isStale: state.isStale,
+        isFetching: state.isFetching,
+      })),
+    );
+  const fetchBusArrivals = useBusStore((state) => state.fetchBusArrivals);
 
   useEffect(() => {
     if (busStopCode) {
@@ -164,13 +168,12 @@ export const BusStopArrivalCard = ({
   );
 };
 
-const BusServiceRow = ({
-  service,
-  changedFields,
-}: {
+type BusServiceRowProps = {
   service: BusService;
   changedFields: ChangedField[];
-}) => {
+};
+
+const BusServiceRow = memo(({ service, changedFields }: BusServiceRowProps) => {
   const arrivals = [service.nextBus, service.nextBus2, service.nextBus3].filter(
     Boolean,
   );
@@ -271,7 +274,7 @@ const BusServiceRow = ({
       )}
     </div>
   );
-};
+});
 
 const getLoadBadge = (load: string) => {
   const badges: Record<string, { label: string; className: string }> = {
@@ -307,7 +310,7 @@ const getBusTypeBadge = (type: string) => {
     {
       label: string;
       shortLabel: string;
-      icon: React.ReactNode;
+      icon: ReactNode;
       variant: string;
     }
   > = {
