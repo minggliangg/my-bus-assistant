@@ -15,7 +15,7 @@
     "clean": "turbo run clean --cache=false"
   },
   "devDependencies": {
-    "turbo": "^2.5.3",
+    "turbo": "^2.8.3",
     "typescript": "~5.9.3"
   },
   "packageManager": "bun@1.2.4"
