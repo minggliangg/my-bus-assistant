@@ -1,6 +1,20 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to ALL AI agents working on code in this repository (Claude Code, OpenCode, etc.).
+
+## CRITICAL: ALWAYS USE BUN
+
+**NEVER use `npm` commands.** This project uses **Bun** as package manager and runtime.
+
+- Always use `bun` instead of `npm`
+- Always use `bun run` or `bunx` instead of `npx`
+- Examples:
+  - ❌ `npm install` → ✅ `bun install`
+  - ❌ `npm run dev` → ✅ `bun dev`
+  - ❌ `npx eslint` → ✅ `bunx eslint`
+  - ❌ `npm test` → ✅ `bun test`
+
+**This is a hard rule. Using npm will break build/test process.**
 
 ## Project Overview
 
