@@ -13,15 +13,22 @@ import {
 } from "@/components/ui/empty";
 import { FavoriteToggleButton } from "@/features/favorites";
 import { cn } from "@/lib/utils";
-import { ArrowUpDown, Bus, Clock, Loader2, MapPin, Users } from "lucide-react";
+import {
+  ArrowLeftRight,
+  Bus,
+  Clock,
+  Layers,
+  Loader2,
+  MapPin,
+} from "lucide-react";
 import { useEffect } from "react";
 import {
   formatArrivalTime,
   getArrivalInMinutes,
   type BusService,
 } from "../models/bus-arrivals-model";
-import { getOperatorBadgeColors, getOperatorFullName } from "../utils";
 import useBusStore, { type ChangedField } from "../stores/useBusStopStore";
+import { getOperatorBadgeColors, getOperatorFullName } from "../utils";
 
 interface BusStopArrivalCardProps {
   busStopCode: string | undefined;
@@ -184,7 +191,7 @@ const BusServiceRow = ({
           <div
             className={cn(
               "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-              getOperatorBadgeColors(service.operator)
+              getOperatorBadgeColors(service.operator),
             )}
           >
             <span className="text-sm font-bold">{service.serviceNo}</span>
@@ -206,9 +213,13 @@ const BusServiceRow = ({
       {/* Route Info */}
       {hasRoute && (
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
-          <span className="truncate shrink min-w-0">{firstArrival?.originName ?? firstArrival?.originCode}</span>
+          <span className="truncate shrink min-w-0">
+            {firstArrival?.originName ?? firstArrival?.originCode}
+          </span>
           <span className="shrink-0">→</span>
-          <span className="truncate shrink min-w-0">{firstArrival?.destinationName ?? firstArrival?.destinationCode}</span>
+          <span className="truncate shrink min-w-0">
+            {firstArrival?.destinationName ?? firstArrival?.destinationCode}
+          </span>
         </div>
       )}
 
@@ -250,10 +261,7 @@ const BusServiceRow = ({
                 </div>
 
                 <div className="flex items-center justify-end gap-1 sm:gap-1.5 min-w-0">
-                  <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground shrink-0">
-                    {getLoadBadge(arrival.load)}
-                  </span>
+                  {getLoadBadge(arrival.load)}
                   {getBusTypeBadge(arrival.type)}
                 </div>
               </div>
@@ -265,24 +273,48 @@ const BusServiceRow = ({
   );
 };
 
-const getLoadBadge = (load: string): string => {
-  const badges: Record<string, string> = {
-    SEA: "Seats",
-    SDA: "Standing",
-    LSD: "Limited",
+const getLoadBadge = (load: string) => {
+  const badges: Record<string, { label: string; className: string }> = {
+    SEA: {
+      label: "Seats",
+      className: "bg-green-600 text-white",
+    },
+    SDA: {
+      label: "Standing",
+      className: "bg-amber-600 text-white",
+    },
+    LSD: {
+      label: "Limited",
+      className: "bg-red-600 text-white",
+    },
   };
-  return badges[load] || load;
+
+  const badge = badges[load];
+  if (!badge) return null;
+
+  return (
+    <div
+      className={`flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-medium ${badge.className}`}
+    >
+      <span className="shrink-0">{badge.label}</span>
+    </div>
+  );
 };
 
 const getBusTypeBadge = (type: string) => {
   const busTypes: Record<
     string,
-    { label: string; shortLabel: string; icon: React.ReactNode; variant: string }
+    {
+      label: string;
+      shortLabel: string;
+      icon: React.ReactNode;
+      variant: string;
+    }
   > = {
     DD: {
       label: "Double",
       shortLabel: "DD",
-      icon: <Bus className="h-3 w-3" />,
+      icon: <Layers className="h-3 w-3" />,
       variant:
         "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
     },
@@ -295,7 +327,7 @@ const getBusTypeBadge = (type: string) => {
     BD: {
       label: "Bendy",
       shortLabel: "BD",
-      icon: <ArrowUpDown className="h-3 w-3" />,
+      icon: <ArrowLeftRight className="h-3 w-3" />,
       variant:
         "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
     },
@@ -306,7 +338,7 @@ const getBusTypeBadge = (type: string) => {
 
   return (
     <div
-      className={`flex items-center gap-1 rounded-md px-1.5 sm:px-2 py-0.5 text-xs font-medium ${busType.variant}`}
+      className={`flex items-center justify-center gap-1 min-w-[80px] rounded-md px-1.5 sm:px-2 py-0.5 text-xs font-medium ${busType.variant}`}
     >
       {busType.icon}
       <span className="hidden sm:inline">{busType.label}</span>
