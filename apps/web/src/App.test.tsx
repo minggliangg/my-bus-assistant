@@ -51,24 +51,32 @@ describe("App", () => {
     window.matchMedia = originalMatchMedia;
   });
 
-  it("renders app title", () => {
+  it("renders app title", async () => {
     render(<App />);
-    expect(screen.getByText("My Bus Assistant")).toBeInTheDocument();
-  });
-
-  it("renders app subtitle", () => {
-    render(<App />);
-    expect(
-      screen.getByText("Real-time bus arrival information at your fingertips"),
-    ).toBeInTheDocument();
-  });
-
-  it("should render Nearby button", () => {
-    render(<App />);
-    const nearbyButton = screen.getByRole("button", {
-      name: "Find nearby bus stops",
+    await waitFor(() => {
+      expect(screen.getByText("My Bus Assistant")).toBeInTheDocument();
     });
-    expect(nearbyButton).toBeInTheDocument();
+  });
+
+  it("renders app subtitle", async () => {
+    render(<App />);
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "Real-time bus arrival information at your fingertips",
+        ),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("should render Nearby button", async () => {
+    render(<App />);
+    await waitFor(() => {
+      const nearbyButton = screen.getByRole("button", {
+        name: "Find nearby bus stops",
+      });
+      expect(nearbyButton).toBeInTheDocument();
+    });
   });
 
   it("should open dialog when Nearby button is clicked", async () => {
@@ -98,7 +106,8 @@ describe("App", () => {
     } as Geolocation);
 
     render(<App />);
-    const nearbyButton = screen.getByRole("button", {
+
+    const nearbyButton = await screen.findByRole("button", {
       name: "Find nearby bus stops",
     });
 
@@ -136,7 +145,8 @@ describe("App", () => {
     } as Geolocation);
 
     render(<App />);
-    const nearbyButton = screen.getByRole("button", {
+
+    const nearbyButton = await screen.findByRole("button", {
       name: "Find nearby bus stops",
     });
 
@@ -147,7 +157,7 @@ describe("App", () => {
     });
   });
 
-  it("should clean up theme listener on unmount", () => {
+  it("should clean up theme listener on unmount", async () => {
     const removeEventListenerSpy = vi.fn();
 
     window.matchMedia = vi.fn().mockImplementation(() => ({
@@ -162,6 +172,11 @@ describe("App", () => {
     })) as unknown as typeof window.matchMedia;
 
     const { unmount } = render(<App />);
+
+    // Wait for initial render to complete
+    await waitFor(() => {
+      expect(screen.getByText("My Bus Assistant")).toBeInTheDocument();
+    });
 
     unmount();
 

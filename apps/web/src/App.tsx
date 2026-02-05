@@ -1,106 +1,16 @@
-import { useState, useEffect, useMemo } from "react";
-import { useShallow } from "zustand/react/shallow";
-import "./App.css";
-import { BusStopArrivalCard, AutoRefreshControl } from "./features/bus-arrivals/components";
-import { BusStopSearchComboBox } from "./features/search-bar";
-import { useBusStopsStore } from "./features/search-bar/stores";
-import { FavoriteBusStops, useFavoritesStore } from "./features/favorites";
-import { NearbyBusStopsButton, NearestBusStopsDialog, useNearbyStore } from "./features/nearby-stops";
-import { useThemeStore, ThemeToggle } from "./features/theme";
+import { RouterProvider, createRouter } from "@tanstack/react-router";
+import { routeTree } from "./routeTree.gen";
 
-const App = () => {
-  const [selectedBusStopCode, setSelectedBusStopCode] = useState<string | undefined>(undefined);
-  const [dialogOpen, setDialogOpen] = useState(false);
+const router = createRouter({ routeTree });
 
-  useEffect(() => {
-    useBusStopsStore.getState().fetchBusStops();
-    useFavoritesStore.getState().loadFavorites();
-    const cleanupTheme = useThemeStore.getState().initializeTheme();
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: typeof router;
+  }
+}
 
-    return cleanupTheme;
-  }, []);
-
-  const handleBusStopSelect = (code: string | undefined) => {
-    setSelectedBusStopCode(code);
-  };
-
-  const handleNearbyDialogOpen = (open: boolean) => {
-    setDialogOpen(open);
-
-    if (open) {
-      const busStops = useBusStopsStore.getState().busStops;
-      const { requestLocation, findNearestStops } = useNearbyStore.getState();
-
-      requestLocation()
-        .then(() => findNearestStops(busStops, 5))
-        .catch(() => {});
-    }
-  };
-
-  const { nearestStops, loadingLocation, locationError, retry, location } = useNearbyStore(
-    useShallow((state) => ({
-      nearestStops: state.nearestStops,
-      loadingLocation: state.loadingLocation,
-      locationError: state.locationError,
-      retry: state.retry,
-      location: state.location,
-    }))
-  );
-
-  // Memoize userLocation to prevent unnecessary map re-renders
-  const userLocation = useMemo(
-    () => (location ? { latitude: location.latitude, longitude: location.longitude } : null),
-    [location],
-  );
-
-  return (
-    <div className="min-h-screen bg-background p-4 sm:p-6">
-      <div className="mx-auto max-w-2xl space-y-6">
-        <header className="relative">
-          <div className="flex items-start justify-center">
-            <div className="space-y-2 text-center">
-              <h1 className="text-3xl font-bold tracking-tight">My Bus Assistant</h1>
-              <p className="text-muted-foreground">
-                Real-time bus arrival information at your fingertips
-              </p>
-            </div>
-          </div>
-          <ThemeToggle />
-        </header>
-
-        <div className="flex gap-2 items-start">
-          <div className="flex-1 min-w-0">
-            <BusStopSearchComboBox
-              onBusStopSelect={handleBusStopSelect}
-              defaultValue={selectedBusStopCode}
-            />
-          </div>
-          <AutoRefreshControl busStopCode={selectedBusStopCode} />
-          <NearbyBusStopsButton onOpenChange={handleNearbyDialogOpen} />
-        </div>
-
-        <FavoriteBusStops
-          selectedBusStopCode={selectedBusStopCode}
-          onBusStopSelect={handleBusStopSelect}
-        />
-
-        <BusStopArrivalCard busStopCode={selectedBusStopCode} />
-
-        <NearestBusStopsDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          nearestStops={nearestStops}
-          loading={loadingLocation}
-          error={locationError}
-          userLocation={userLocation}
-          onBusStopSelect={(code) => {
-            handleBusStopSelect(code);
-          }}
-          onRetry={retry}
-        />
-      </div>
-    </div>
-  );
-};
+function App() {
+  return <RouterProvider router={router} />;
+}
 
 export default App;
