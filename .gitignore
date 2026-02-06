@@ -26,6 +26,11 @@ dist-ssr
 # Environment variables
 .env
 
+# Dev environment files
+.env.dev
+apps/web/.env.dev
+apps/api/.env.dev
+
 # Documentation
 /docs
 

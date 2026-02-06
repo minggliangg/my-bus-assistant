@@ -14,9 +14,10 @@ export default defineConfig({
     },
   },
   server: {
+    port: 5174,
     proxy: {
       "/api": {
-        target: "http://localhost:3001",
+        target: "http://localhost:3002",
         changeOrigin: true,
       },
     },
@@ -28,7 +29,10 @@ export default defineConfig({
           if (id.includes("maplibre-gl")) {
             return "maplibre";
           }
-          if (id.includes("node_modules/react") || id.includes("node_modules/react-dom")) {
+          if (
+            id.includes("node_modules/react") ||
+            id.includes("node_modules/react-dom")
+          ) {
             return "react-vendor";
           }
         },
