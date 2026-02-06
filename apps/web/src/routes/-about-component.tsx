@@ -47,6 +47,14 @@ export function About() {
               </a>
               .
             </p>
+
+            <div className="flex justify-center mt-4">
+              <img
+                src="/qr-code.svg"
+                alt="QR Code"
+                className="w-full max-w-[200px] h-auto border rounded-lg p-2 bg-white"
+              />
+            </div>
           </CardContent>
         </Card>
 
