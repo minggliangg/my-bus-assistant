@@ -52,7 +52,6 @@ export const FavoriteBusStops = ({
               className="cursor-pointer hover:shadow-md transition-shadow"
               onClick={() => onBusStopSelect(code)}
             >
-              <span className="font-mono">{code}</span>
               <span className="truncate max-w-[150px] sm:max-w-[200px]">
                 {busStop.description}
               </span>

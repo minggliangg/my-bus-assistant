@@ -63,9 +63,7 @@ describe("FavoriteBusStops", () => {
     );
 
     expect(screen.getByText("Favorites")).toBeInTheDocument();
-    expect(screen.getByText("01012")).toBeInTheDocument();
     expect(screen.getByText("Hotel Grand Pacific")).toBeInTheDocument();
-    expect(screen.getByText("01013")).toBeInTheDocument();
     expect(screen.getByText("St Joseph's Church")).toBeInTheDocument();
   });
 
@@ -79,7 +77,7 @@ describe("FavoriteBusStops", () => {
       />,
     );
 
-    const badge = screen.getByText("01012");
+    const badge = screen.getByText("Hotel Grand Pacific");
     await userEvent.click(badge);
 
     expect(mockOnBusStopSelect).toHaveBeenCalledWith("01012");
@@ -95,7 +93,7 @@ describe("FavoriteBusStops", () => {
       />,
     );
 
-    const badges = screen.getAllByText("01012");
+    const badges = screen.getAllByText("Hotel Grand Pacific");
     const selectedBadge = badges[0].closest('[data-variant="default"]');
 
     expect(selectedBadge).toBeInTheDocument();
