@@ -38,7 +38,16 @@ describe("FavoriteBusStops", () => {
   });
 
   it("should render empty state", () => {
-    useFavoritesStore.setState({ favorites: [] });
+    useFavoritesStore.setState({ favorites: [], loading: false });
+    useBusStopsStore.setState({
+      busStops: [],
+      loading: false,
+      error: null,
+      lastUpdateTimestamp: null,
+      isFetching: false,
+      retryCount: 0,
+      isStale: false,
+    });
 
     render(
       <FavoriteBusStops
@@ -53,7 +62,31 @@ describe("FavoriteBusStops", () => {
   });
 
   it("should render favorites list", () => {
-    useFavoritesStore.setState({ favorites: ["01012", "01013"] });
+    useFavoritesStore.setState({ favorites: ["01012", "01013"], loading: false });
+    useBusStopsStore.setState({
+      busStops: [
+        {
+          busStopCode: "01012",
+          roadName: "Victoria St",
+          description: "Hotel Grand Pacific",
+          latitude: 1.296848,
+          longitude: 103.852535,
+        },
+        {
+          busStopCode: "01013",
+          roadName: "Victoria St",
+          description: "St Joseph's Church",
+          latitude: 1.297928,
+          longitude: 103.853321,
+        },
+      ],
+      loading: false,
+      error: null,
+      lastUpdateTimestamp: null,
+      isFetching: false,
+      retryCount: 0,
+      isStale: false,
+    });
 
     render(
       <FavoriteBusStops
@@ -68,7 +101,24 @@ describe("FavoriteBusStops", () => {
   });
 
   it("should call onBusStopSelect when clicking favorite", async () => {
-    useFavoritesStore.setState({ favorites: ["01012"] });
+    useFavoritesStore.setState({ favorites: ["01012"], loading: false });
+    useBusStopsStore.setState({
+      busStops: [
+        {
+          busStopCode: "01012",
+          roadName: "Victoria St",
+          description: "Hotel Grand Pacific",
+          latitude: 1.296848,
+          longitude: 103.852535,
+        },
+      ],
+      loading: false,
+      error: null,
+      lastUpdateTimestamp: null,
+      isFetching: false,
+      retryCount: 0,
+      isStale: false,
+    });
 
     render(
       <FavoriteBusStops
@@ -84,7 +134,31 @@ describe("FavoriteBusStops", () => {
   });
 
   it("should highlight selected bus stop", () => {
-    useFavoritesStore.setState({ favorites: ["01012", "01013"] });
+    useFavoritesStore.setState({ favorites: ["01012", "01013"], loading: false });
+    useBusStopsStore.setState({
+      busStops: [
+        {
+          busStopCode: "01012",
+          roadName: "Victoria St",
+          description: "Hotel Grand Pacific",
+          latitude: 1.296848,
+          longitude: 103.852535,
+        },
+        {
+          busStopCode: "01013",
+          roadName: "Victoria St",
+          description: "St Joseph's Church",
+          latitude: 1.297928,
+          longitude: 103.853321,
+        },
+      ],
+      loading: false,
+      error: null,
+      lastUpdateTimestamp: null,
+      isFetching: false,
+      retryCount: 0,
+      isStale: false,
+    });
 
     render(
       <FavoriteBusStops
@@ -100,7 +174,7 @@ describe("FavoriteBusStops", () => {
   });
 
   it("should truncate long descriptions", () => {
-    useFavoritesStore.setState({ favorites: ["01012"] });
+    useFavoritesStore.setState({ favorites: ["01012"], loading: false });
     useBusStopsStore.setState({
       busStops: [
         {
@@ -130,5 +204,92 @@ describe("FavoriteBusStops", () => {
       (content) => content.includes("This is a very long"),
     );
     expect(description).toBeInTheDocument();
+  });
+
+  it("should show loading state when favorites are loading", () => {
+    useFavoritesStore.setState({ favorites: [], loading: true });
+    useBusStopsStore.setState({
+      busStops: [
+        {
+          busStopCode: "01012",
+          roadName: "Victoria St",
+          description: "Hotel Grand Pacific",
+          latitude: 1.296848,
+          longitude: 103.852535,
+        },
+      ],
+      loading: false,
+      error: null,
+      lastUpdateTimestamp: null,
+      isFetching: false,
+      retryCount: 0,
+      isStale: false,
+    });
+
+    render(
+      <FavoriteBusStops
+        onBusStopSelect={mockOnBusStopSelect}
+        selectedBusStopCode={undefined}
+      />
+    );
+
+    expect(screen.getByText("Loading favorites...")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Star bus stops to add them to favorites")
+    ).not.toBeInTheDocument();
+  });
+
+  it("should show loading state when bus stops are loading but favorites are ready", () => {
+    useFavoritesStore.setState({ favorites: ["01012", "01013"], loading: false });
+    useBusStopsStore.setState({
+      busStops: [],
+      loading: true,
+      error: null,
+      lastUpdateTimestamp: null,
+      isFetching: false,
+      retryCount: 0,
+      isStale: false,
+    });
+
+    render(
+      <FavoriteBusStops
+        onBusStopSelect={mockOnBusStopSelect}
+        selectedBusStopCode={undefined}
+      />
+    );
+
+    expect(screen.getByText("Loading favorites...")).toBeInTheDocument();
+    expect(screen.queryByText("Hotel Grand Pacific")).not.toBeInTheDocument();
+  });
+
+  it("should show favorites after both stores finish loading", () => {
+    useFavoritesStore.setState({ favorites: ["01012"], loading: false });
+    useBusStopsStore.setState({
+      busStops: [
+        {
+          busStopCode: "01012",
+          roadName: "Victoria St",
+          description: "Hotel Grand Pacific",
+          latitude: 1.296848,
+          longitude: 103.852535,
+        },
+      ],
+      loading: false,
+      error: null,
+      lastUpdateTimestamp: null,
+      isFetching: false,
+      retryCount: 0,
+      isStale: false,
+    });
+
+    render(
+      <FavoriteBusStops
+        onBusStopSelect={mockOnBusStopSelect}
+        selectedBusStopCode={undefined}
+      />
+    );
+
+    expect(screen.queryByText("Loading favorites...")).not.toBeInTheDocument();
+    expect(screen.getByText("Hotel Grand Pacific")).toBeInTheDocument();
   });
 });

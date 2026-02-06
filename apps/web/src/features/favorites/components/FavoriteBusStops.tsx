@@ -1,4 +1,4 @@
-import { Star } from "lucide-react";
+import { Star, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useShallow } from "zustand/react/shallow";
@@ -16,10 +16,33 @@ export const FavoriteBusStops = ({
   onBusStopSelect,
   className,
 }: FavoriteBusStopsProps) => {
-  const { favorites } = useFavoritesStore(
-    useShallow((state) => ({ favorites: state.favorites }))
+  const { favorites, loading: favoritesLoading } = useFavoritesStore(
+    useShallow((state) => ({
+      favorites: state.favorites,
+      loading: state.loading
+    }))
   );
+  const busStopsLoading = useBusStopsStore((state) => state.loading);
   const getBusStopByCode = useBusStopsStore((state) => state.getBusStopByCode);
+
+  const isLoading = favoritesLoading || (favorites.length > 0 && busStopsLoading);
+
+  if (isLoading) {
+    return (
+      <div className={cn("min-h-[48px]", className)}>
+        <div className="flex items-center gap-2 mb-2">
+          <Star className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">Favorites</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">
+            Loading favorites...
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   if (favorites.length === 0) {
     return (
