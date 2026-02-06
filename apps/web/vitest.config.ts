@@ -1,11 +1,12 @@
-import react from "@vitejs/plugin-react-oxc";
+import react from "@vitejs/plugin-react";
+import path, { dirname } from "path";
 import { fileURLToPath } from "url";
-import { dirname } from "path";
-import path from "path";
 import { defineConfig } from "vitest/config";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+process.env.NODE_NO_WARNINGS = "1";
 
 export default defineConfig({
   plugins: [react()],
@@ -15,6 +16,9 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     include: ["**/*.{test,spec}.{js,jsx,ts,tsx}"],
     exclude: ["node_modules", "dist", "build"],
+    deps: {
+      interopDefault: true,
+    },
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
@@ -34,7 +38,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "@my-bus-assistant/shared": path.resolve(__dirname, "../../packages/shared/src"),
+      "@my-bus-assistant/shared": path.resolve(
+        __dirname,
+        "../../packages/shared/src",
+      ),
     },
   },
 });

@@ -15,11 +15,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Map } from "@/components/ui/map";
 import { Badge } from "@/components/ui/badge";
 import type { NearbyBusStop } from "../models/nearby-stops-model";
 import { formatDistance } from "../utils/geolocation";
-import { useState } from "react";
+import { useState, Suspense, lazy } from "react";
+
+const Map = lazy(() => import("@/components/ui/map"));
 
 interface NearestBusStopsDialogProps {
   open: boolean;
@@ -118,13 +119,15 @@ export const NearestBusStopsDialog = ({
             </div>
           ) : (
             <>
-              <Map
-                className="rounded-lg"
-                userLocation={userLocation}
-                busStops={nearestStops}
-                onBusStopClick={handleMarkerClick}
-                selectedStopCode={selectedStop?.busStopCode}
-              />
+              <Suspense fallback={null}>
+                <Map
+                  className="rounded-lg"
+                  userLocation={userLocation}
+                  busStops={nearestStops}
+                  onBusStopClick={handleMarkerClick}
+                  selectedStopCode={selectedStop?.busStopCode}
+                />
+              </Suspense>
 
               {/* Info overlay */}
               <div className="absolute top-4 left-4 right-4 flex gap-2">

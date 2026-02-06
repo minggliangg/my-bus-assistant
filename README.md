@@ -60,6 +60,7 @@ bun dev
 ```
 
 This starts:
+
 - **Frontend**: http://localhost:5173 (Vite dev server with hot reload)
 - **Backend**: http://localhost:3001 (Bun with watch mode)
 
@@ -76,11 +77,11 @@ The frontend automatically proxies `/api/*` requests to the backend via Vite's p
 
 The backend proxies LTA DataMall API requests and handles pagination automatically:
 
-| Endpoint | Description |
-|----------|-------------|
-| `GET /api/ltaodataservice/v3/BusArrival?BusStopCode=12345` | Get real-time bus arrival data for a specific stop |
-| `GET /api/ltaodataservice/BusStops` | Get all Singapore bus stops (~5,000 stops, auto-paginated) |
-| `GET /health` | Health check endpoint |
+| Endpoint                                                   | Description                                                |
+| ---------------------------------------------------------- | ---------------------------------------------------------- |
+| `GET /api/ltaodataservice/v3/BusArrival?BusStopCode=12345` | Get real-time bus arrival data for a specific stop         |
+| `GET /api/ltaodataservice/BusStops`                        | Get all Singapore bus stops (~5,000 stops, auto-paginated) |
+| `GET /health`                                              | Health check endpoint                                      |
 
 > **Note**: The frontend automatically proxies all `/api/*` requests to the backend (http://localhost:3001). The backend adds the LTA API key to upstream requests, keeping credentials secure.
 
@@ -127,6 +128,7 @@ bun clean:deps   # Remove all node_modules
 ## Features
 
 ### Core Functionality
+
 - 🚏 **Real-time Bus Arrivals**: Track bus arrivals at any Singapore bus stop
 - ⭐ **Favorites**: Save frequently used bus stops for quick access
 - 📍 **Nearby Stops**: Find bus stops near your current location with interactive map
@@ -136,6 +138,7 @@ bun clean:deps   # Remove all node_modules
 - 📱 **Responsive Design**: Works seamlessly on desktop and mobile
 
 ### Technical Features
+
 - ⚡ **Offline-first**: IndexedDB caching with stale-while-revalidate pattern
 - 🔒 **Secure**: API keys managed server-side only
 - 🚀 **Fast**: Built on Bun runtime with Rolldown bundler
@@ -148,8 +151,9 @@ bun clean:deps   # Remove all node_modules
 ### Tech Stack
 
 **Frontend** (`apps/web/`)
+
 - React 19 with TypeScript
-- Rolldown (via `rolldown-vite`) + @vitejs/plugin-react-oxc for blazing fast builds
+- Rolldown (via `rolldown-vite`) + @@vitejs/plugin-react for blazing fast builds
 - TanStack Router for file-based routing
 - Tailwind CSS v4 with `@tailwindcss/vite` plugin
 - Zustand for state management
@@ -159,16 +163,19 @@ bun clean:deps   # Remove all node_modules
 - Radix UI + shadcn/ui for accessible components
 
 **Backend** (`apps/api/`)
+
 - Hono web framework on Bun runtime
 - LTA DataMall API integration
 - CORS + Logger middleware
 - Automatic pagination handling
 
 **Shared** (`packages/shared/`)
+
 - TypeScript types shared between frontend and backend
 - DTO definitions for API contracts
 
 **Build System**
+
 - Turborepo for task orchestration and caching
 - Bun workspaces for dependency management
 
@@ -210,12 +217,14 @@ This separation ensures API contracts don't leak into business logic and makes t
 ## Environment Variables
 
 ### Backend (`apps/api/.env`)
+
 ```bash
 LTA_DATAMALL_API_KEY=your_api_key_here  # Required: LTA DataMall API key
 PORT=3001                                # Optional: API server port (default: 3001)
 ```
 
 ### Frontend (optional, `apps/web/.env`)
+
 ```bash
 VITE_BUS_STOPS_REFRESH_DAYS=7           # Days before refreshing bus stops cache (default: 7)
 VITE_THROTTLE_INTERVAL_MS=30000         # API throttle interval in ms (default: 30000)
@@ -223,15 +232,15 @@ VITE_THROTTLE_INTERVAL_MS=30000         # API throttle interval in ms (default: 
 
 ## Project Commands Reference
 
-| Command | Description |
-|---------|-------------|
-| `bun dev` | Start both frontend and backend in dev mode |
-| `bun build` | Build all packages |
-| `bun test` | Run all tests |
-| `bun lint` | Lint all packages |
-| `bun clean` | Remove build artifacts from all packages |
-| `bun clean:cache` | Clear Turborepo cache |
-| `bun clean:deps` | Remove all node_modules directories |
+| Command           | Description                                 |
+| ----------------- | ------------------------------------------- |
+| `bun dev`         | Start both frontend and backend in dev mode |
+| `bun build`       | Build all packages                          |
+| `bun test`        | Run all tests                               |
+| `bun lint`        | Lint all packages                           |
+| `bun clean`       | Remove build artifacts from all packages    |
+| `bun clean:cache` | Clear Turborepo cache                       |
+| `bun clean:deps`  | Remove all node_modules directories         |
 
 ## Contributing
 

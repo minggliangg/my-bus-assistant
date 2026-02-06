@@ -19,6 +19,7 @@ This file provides guidance to ALL AI agents working on code in this repository 
 ## Project Overview
 
 This is a Turborepo monorepo for a Singapore bus arrival tracking app, split into:
+
 - **Frontend**: React 19 + Vite (in `apps/web/`)
 - **Backend**: Hono API on Bun runtime (in `apps/api/`)
 - **Shared**: TypeScript types for type safety between frontend and backend (in `packages/shared/`)
@@ -26,7 +27,9 @@ This is a Turborepo monorepo for a Singapore bus arrival tracking app, split int
 ## Commands
 
 ### Development
+
 From the **root directory** (uses Turborepo):
+
 ```bash
 bun dev          # Start both frontend and backend concurrently
 bun build        # Build all packages
@@ -38,6 +41,7 @@ bun clean:deps   # Remove all node_modules directories
 ```
 
 ### Frontend (`apps/web/`)
+
 ```bash
 bun dev                # Start Vite dev server (http://localhost:5173)
 bun build              # Type-check and build for production
@@ -50,11 +54,13 @@ bun run test:coverage  # Run tests with coverage
 ```
 
 To run a single test file:
+
 ```bash
 bun test apps/web/src/path/to/file.test.ts
 ```
 
 ### Backend (`apps/api/`)
+
 ```bash
 bun dev          # Start API with watch mode (http://localhost:3001)
 bun build        # Build for Bun runtime
@@ -63,6 +69,7 @@ bun test         # Run Bun tests
 ```
 
 ### Shared Types (`packages/shared/`)
+
 ```bash
 bun build        # Type-check TypeScript
 bun lint         # Type-check without emitting
@@ -71,6 +78,7 @@ bun lint         # Type-check without emitting
 ## Architecture
 
 ### Monorepo Structure
+
 - **Turborepo** orchestrates builds, dev servers, and tests across workspaces
 - **Bun workspaces** manage dependencies (`workspace:*` protocol)
 - **Shared package** provides TypeScript types imported by both frontend and backend
@@ -79,8 +87,9 @@ bun lint         # Type-check without emitting
 ### Frontend Architecture (`apps/web/`)
 
 #### Tech Stack
+
 - **Runtime**: Bun v1.2.4
-- **Build Tool**: Rolldown (via `rolldown-vite`) with `@vitejs/plugin-react-oxc`
+- **Build Tool**: Rolldown (via `rolldown-vite`) with `@vitejs/plugin-react`
 - **Framework**: React 19 + TypeScript
 - **Styling**: Tailwind CSS v4 with `@tailwindcss/vite` plugin
 - **State Management**: Zustand
@@ -89,6 +98,7 @@ bun lint         # Type-check without emitting
 - **UI Components**: Radix UI primitives + shadcn/ui patterns
 
 #### Feature-Based Organization
+
 Code is organized by feature under `apps/web/src/features/`:
 
 ```
@@ -105,6 +115,7 @@ Current features: `bus-arrivals/`, `search-bar/`, `favorites/`
 Each feature exports its public API through an `index.ts` barrel file.
 
 #### Data Flow Pattern
+
 1. **DTO Layer** (`dtos/`): Raw API response types matching LTA DataMall schema
 2. **Mapper Layer** (`mappers/`): Pure functions to transform DTOs to domain models
 3. **Model Layer** (`models/`): Business domain types (e.g., `BusStop`, `BusService`)
@@ -114,6 +125,7 @@ Each feature exports its public API through an `index.ts` barrel file.
 This ensures API contracts don't leak into business logic.
 
 #### Storage Layer
+
 - **Location**: `apps/web/src/lib/storage/`
 - **Technology**: IndexedDB via `idb` library
 - **Stores**:
@@ -123,12 +135,14 @@ This ensures API contracts don't leak into business logic.
 - **Pattern**: Stale-while-revalidate (stores check cache validity and refetch if stale)
 
 #### UI Components
+
 - **Base components**: `apps/web/src/components/ui/` (shadcn/ui patterns)
 - **Styling utilities**: `clsx` + `tailwind-merge` in `apps/web/src/lib/utils.ts`
 - **Variants**: `class-variance-authority` for component variants
 - **Icons**: `lucide-react`
 
 #### Tailwind CSS v4 Syntax
+
 Tailwind CSS v4 includes built-in linting that flags outdated selector syntax. When writing arbitrary selectors (especially for child element targeting), use the newer syntax:
 
 **Old syntax (v3 style)**: `[&_[cmdk-group-heading]]:font-medium`
@@ -137,6 +151,7 @@ Tailwind CSS v4 includes built-in linting that flags outdated selector syntax. W
 The `**:` prefix replaces the older `[&_...]` pattern for better readability and consistency. If you see linting warnings about this, update the selectors to use the new syntax.
 
 #### Testing Setup
+
 - **Framework**: Vitest with jsdom environment
 - **Mocking**: MSW server configured in `apps/web/src/mocks/server.ts`
 - **Setup**: `apps/web/src/test/setup.ts` (Testing Library matchers, fake-indexeddb)
@@ -146,19 +161,24 @@ The `**:` prefix replaces the older `[&_...]` pattern for better readability and
 ### Backend Architecture (`apps/api/`)
 
 #### Tech Stack
+
 - **Runtime**: Bun
 - **Framework**: Hono (lightweight web framework)
 - **Middleware**: CORS, Logger
 - **API**: Proxies/aggregates LTA DataMall API endpoints
 
 #### Routes
+
 Routes mirror LTA DataMall API structure:
+
 - `GET /api/ltaodataservice/v3/BusArrival?BusStopCode=12345` - Bus arrivals for a stop
 - `GET /api/ltaodataservice/BusStops` - All bus stops (auto-aggregates paginated LTA results)
 - `GET /health` - Health check
 
 #### Configuration
+
 API key is managed server-side via `apps/api/.env`:
+
 ```bash
 LTA_DATAMALL_API_KEY=your_api_key_here
 PORT=3001  # optional
@@ -167,6 +187,7 @@ PORT=3001  # optional
 **Important**: API key is NEVER exposed to the frontend. Frontend proxies through backend.
 
 ### Shared Types (`packages/shared/`)
+
 - **Purpose**: Type-safe contracts between frontend and backend
 - **Location**: `packages/shared/src/types/`
 - **Types**: Bus arrival DTOs, bus stop DTOs
@@ -175,16 +196,19 @@ PORT=3001  # optional
 ## Key Design Decisions
 
 ### API Key Security
+
 - LTA DataMall API key lives in `apps/api/.env` (server-side only)
 - Frontend makes requests to `/api/*`, which Vite proxies to backend
 - Backend adds API key to LTA requests
 
 ### Bus Stops Aggregation
+
 - LTA DataMall returns bus stops in paginated responses (500 at a time)
 - Backend automatically fetches all pages and returns complete dataset
 - Frontend caches result in IndexedDB with configurable refresh interval
 
 ### Stale-While-Revalidate Pattern
+
 - Frontend serves cached data immediately
 - Checks cache freshness based on timestamp
 - Refetches in background if stale
@@ -198,5 +222,6 @@ PORT=3001  # optional
 4. **Building**: Run `bun build` from root (Turborepo handles dependencies)
 
 ## Environment Requirements
+
 - **Bun**: v1.2.4 or higher
 - **LTA API Key**: Get from https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html
