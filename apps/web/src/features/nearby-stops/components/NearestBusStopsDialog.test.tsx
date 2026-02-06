@@ -1,35 +1,42 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NearestBusStopsDialog } from "./NearestBusStopsDialog";
 import type { NearbyBusStop } from "../models/nearby-stops-model";
 
 // Mock the Map component since it requires DOM and Web APIs not available in test
+const MapComponent = ({ className, busStops, onBusStopClick, selectedStopCode }: {
+  className?: string;
+  userLocation: { latitude: number; longitude: number } | null;
+  busStops: NearbyBusStop[];
+  onBusStopClick?: (code: string) => void;
+  selectedStopCode?: string;
+}) => (
+  <div data-testid="map" className={className}>
+    <div data-testid="bus-stops-count">{busStops.length}</div>
+    {selectedStopCode && <div data-testid="selected-stop">{selectedStopCode}</div>}
+    <button
+      onClick={() => onBusStopClick?.(busStops[0]?.busStopCode)}
+      type="button"
+    >
+      Simulate Marker Click
+    </button>
+  </div>
+);
+
 vi.mock("@/components/ui/map", () => ({
-  Map: ({ className, busStops, onBusStopClick, selectedStopCode }: {
-    className?: string;
-    userLocation: { latitude: number; longitude: number } | null;
-    busStops: NearbyBusStop[];
-    onBusStopClick?: (code: string) => void;
-    selectedStopCode?: string;
-  }) => (
-    <div data-testid="map" className={className}>
-      <div data-testid="bus-stops-count">{busStops.length}</div>
-      {selectedStopCode && <div data-testid="selected-stop">{selectedStopCode}</div>}
-      <button
-        onClick={() => onBusStopClick?.(busStops[0]?.busStopCode)}
-        type="button"
-      >
-        Simulate Marker Click
-      </button>
-    </div>
-  ),
+  Map: MapComponent,
+  default: MapComponent,
 }));
 
 describe("NearestBusStopsDialog", () => {
   const mockOnOpenChange = vi.fn();
   const mockOnBusStopSelect = vi.fn();
   const mockOnRetry = vi.fn();
+
+  beforeEach(() => {
+    vi.useRealTimers();
+  });
 
   const mockNearestStops: NearbyBusStop[] = [
     {
@@ -274,5 +281,21 @@ describe("NearestBusStopsDialog", () => {
     );
 
     expect(screen.getByTestId("map")).toBeInTheDocument();
+  });
+
+  it("should auto-hide info overlay after 3 seconds", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
+    render(<NearestBusStopsDialog {...defaultProps} />);
+
+    expect(screen.getByText("2 nearby stops found")).toBeInTheDocument();
+    expect(screen.getByText("Click a marker to select")).toBeInTheDocument();
+
+    await act(async () => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    expect(screen.queryByText("2 nearby stops found")).not.toBeInTheDocument();
+    expect(screen.queryByText("Click a marker to select")).not.toBeInTheDocument();
   });
 });

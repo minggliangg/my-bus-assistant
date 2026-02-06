@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { NearbyBusStop } from "../models/nearby-stops-model";
 import { formatDistance } from "../utils/geolocation";
-import { useState, Suspense, lazy } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 
 const Map = lazy(() => import("@/components/ui/map"));
 
@@ -45,6 +45,7 @@ export const NearestBusStopsDialog = ({
 }: NearestBusStopsDialogProps) => {
   const isPermissionDenied = error?.toLowerCase().includes("permission");
   const [selectedStop, setSelectedStop] = useState<NearbyBusStop | null>(null);
+  const [showInfoOverlay, setShowInfoOverlay] = useState(true);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
@@ -70,6 +71,16 @@ export const NearestBusStopsDialog = ({
       handleStopClick(selectedStop.busStopCode);
     }
   };
+
+  useEffect(() => {
+    if (!open || loading || error || nearestStops.length === 0) return;
+
+    const timer = setTimeout(() => {
+      setShowInfoOverlay(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [open, loading, error, nearestStops.length]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -130,17 +141,19 @@ export const NearestBusStopsDialog = ({
               </Suspense>
 
               {/* Info overlay */}
-              <div className="absolute top-4 left-4 right-4 flex gap-2">
-                <div className="bg-background/95 backdrop-blur-sm border border-border rounded-lg px-3 py-2 shadow-md">
-                  <p className="text-sm font-medium">
-                    {nearestStops.length} nearby stop
-                    {nearestStops.length !== 1 ? "s" : ""} found
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Click a marker to select
-                  </p>
+              {showInfoOverlay && (
+                <div className="absolute top-4 left-4 right-4 flex gap-2 transition-opacity duration-500 ease-out">
+                  <div className="bg-background/95 backdrop-blur-sm border border-border rounded-lg px-3 py-2 shadow-md">
+                    <p className="text-sm font-medium">
+                      {nearestStops.length} nearby stop
+                      {nearestStops.length !== 1 ? "s" : ""} found
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Click a marker to select
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Selected stop card */}
               {selectedStop && (
