@@ -54,8 +54,8 @@ describe("BusStopCard", () => {
 
       await waitFor(() => {
         expect(screen.getByText("83139")).toBeInTheDocument();
-        expect(screen.getByText("15")).toBeInTheDocument();
-        expect(screen.getByText("66")).toBeInTheDocument();
+        expect(screen.getAllByText("15").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("66").length).toBeGreaterThan(0);
       });
     });
 
@@ -120,8 +120,8 @@ describe("BusStopCard", () => {
       renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
-        expect(screen.getByText("15")).toBeInTheDocument();
-        expect(screen.getByText("66")).toBeInTheDocument();
+        expect(screen.getAllByText("15").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("66").length).toBeGreaterThan(0);
       });
     });
 
@@ -180,11 +180,32 @@ describe("BusStopCard", () => {
 
       await waitFor(() => {
         // Service 66 has only 2 arrivals (nextBus3 is null)
-        expect(screen.getByText("66")).toBeInTheDocument();
+        expect(screen.getAllByText("66").length).toBeGreaterThan(0);
         // Should not show "No arrivals" for services with partial data
         expect(screen.queryByText("No arrivals")).not.toBeInTheDocument();
       });
     });
+  });
+
+  describe("Arrival hierarchy", () => {
+    test("renders primary hero and secondary arrivals for multi-arrival service", async () => {
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("primary-arrival-15")).toBeInTheDocument();
+        expect(screen.getByTestId("secondary-arrivals-15")).toBeInTheDocument();
+      });
+    });
+
+    test("renders only primary hero when service has one arrival", async () => {
+      renderWithProviders(<BusStopArrivalCard busStopCode="83138" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("primary-arrival-15")).toBeInTheDocument();
+        expect(screen.queryByTestId("secondary-arrivals-15")).not.toBeInTheDocument();
+      });
+    });
+
   });
 
   // Behavior
@@ -268,7 +289,7 @@ describe("BusStopCard", () => {
 
       // Wait for fresh data to load (component will show cached data, then fresh)
       await waitFor(() => {
-        expect(screen.getByText("15")).toBeInTheDocument();
+        expect(screen.getAllByText("15").length).toBeGreaterThan(0);
       });
 
       // After fresh fetch, stale indicator should not be present

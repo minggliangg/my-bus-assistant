@@ -26,6 +26,7 @@ import { useShallow } from "zustand/react/shallow";
 import {
   formatArrivalTime,
   getArrivalInMinutes,
+  type BusArrival,
   type BusService,
 } from "../models/bus-arrivals-model";
 import useBusStore, { type ChangedField } from "../stores/useBusStopStore";
@@ -173,24 +174,34 @@ type BusServiceRowProps = {
   changedFields: ChangedField[];
 };
 
+type ArrivalEntry = {
+  arrival: BusArrival;
+  index: number;
+};
+
 const BusServiceRow = memo(({ service, changedFields }: BusServiceRowProps) => {
-  const arrivals = [service.nextBus, service.nextBus2, service.nextBus3].filter(
-    Boolean,
-  );
+  const arrivalCandidates: ArrivalEntry[] = [service.nextBus, service.nextBus2, service.nextBus3]
+    .map((arrival, index) => (arrival ? { arrival, index } : null))
+    .filter((entry): entry is ArrivalEntry => Boolean(entry));
 
   // Check if this service's arrival times have changed
   const hasChanges = changedFields.some(
     (field) => field.serviceNo === service.serviceNo,
   );
 
-  const firstArrival = service.nextBus || service.nextBus2 || service.nextBus3;
-  const hasRoute = firstArrival?.originName || firstArrival?.destinationName;
+  const primaryArrival = arrivalCandidates[0];
+  const secondaryArrivals = arrivalCandidates.slice(1);
+  const hasRoute =
+    primaryArrival?.arrival.originName || primaryArrival?.arrival.destinationName;
 
   return (
-    <div className="rounded-lg border bg-card p-3 sm:p-4 space-y-3">
-      {/* Service Number */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
+    <div
+      className="rounded-lg border bg-card p-3 sm:p-4 space-y-3"
+      data-testid={`service-row-${service.serviceNo}`}
+    >
+      {/* Service Number + Primary Arrival */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
           <div
             className={cn(
               "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
@@ -211,72 +222,114 @@ const BusServiceRow = memo(({ service, changedFields }: BusServiceRowProps) => {
             {getOperatorFullName(service.operator)}
           </span>
         </div>
+
+        {primaryArrival && (
+          <div
+            className="flex shrink-0 items-center gap-2"
+            data-testid={`primary-arrival-${service.serviceNo}`}
+          >
+            <Clock className="h-5 w-5 text-primary" />
+            <span
+              className={cn(
+                "arrival-time text-2xl font-bold leading-none transition-colors duration-2000 ease-out sm:text-3xl",
+                {
+                  "text-green-600": changedFields.some(
+                    (field) =>
+                      field.serviceNo === service.serviceNo &&
+                      field.busIndex === primaryArrival.index,
+                  ),
+                  "text-primary": getArrivalInMinutes(primaryArrival.arrival) <= 1,
+                  "text-foreground":
+                    getArrivalInMinutes(primaryArrival.arrival) > 1 &&
+                    !changedFields.some(
+                      (field) =>
+                        field.serviceNo === service.serviceNo &&
+                        field.busIndex === primaryArrival.index,
+                    ),
+                },
+              )}
+            >
+              {formatArrivalTime(primaryArrival.arrival)}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Route Info */}
       {hasRoute && (
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
           <span className="truncate shrink min-w-0">
-            {firstArrival?.originName ?? firstArrival?.originCode}
+            {primaryArrival?.arrival.originName ?? primaryArrival?.arrival.originCode}
           </span>
           <span className="shrink-0">→</span>
           <span className="truncate shrink min-w-0">
-            {firstArrival?.destinationName ?? firstArrival?.destinationCode}
+            {primaryArrival?.arrival.destinationName ??
+              primaryArrival?.arrival.destinationCode}
           </span>
         </div>
       )}
 
       {/* Arrivals */}
-      {arrivals.length === 0 ? (
+      {arrivalCandidates.length === 0 ? (
         <div className="text-sm text-muted-foreground">No arrivals</div>
       ) : (
         <div className="space-y-2">
-          {arrivals.map((arrival, index) => {
-            if (!arrival) return null;
+          {primaryArrival && (
+            <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+              {getLoadBadge(primaryArrival.arrival.load)}
+              {getBusTypeBadge(primaryArrival.arrival.type)}
+            </div>
+          )}
 
-            // Check if this specific bus arrival has changed
-            const isChanged = changedFields.some(
-              (field) =>
-                field.serviceNo === service.serviceNo &&
-                field.busIndex === index,
-            );
+          {secondaryArrivals.length > 0 && (
+            <div
+              className="space-y-1"
+              data-testid={`secondary-arrivals-${service.serviceNo}`}
+            >
+              {secondaryArrivals.map((arrivalEntry) => {
+                const isChanged = changedFields.some(
+                  (field) =>
+                    field.serviceNo === service.serviceNo &&
+                    field.busIndex === arrivalEntry.index,
+                );
+                const isArriving = getArrivalInMinutes(arrivalEntry.arrival) <= 1;
 
-            const minutes = getArrivalInMinutes(arrival);
-            const isArriving = minutes <= 1;
-
-            return (
-              <div key={index} className="grid grid-cols-2 gap-2 text-sm">
-                <div className="flex items-center gap-2 min-w-0">
-                  <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span
-                    className={cn(
-                      "arrival-time transition-colors duration-2000 ease-out",
-                      {
-                        "text-green-600": isChanged,
-                        "font-semibold": isChanged,
-                        "font-semibold text-primary": isArriving && !isChanged,
-                        "text-foreground": !isArriving && !isChanged,
-                      },
-                    )}
+                return (
+                  <div
+                    key={arrivalEntry.index}
+                    className="grid grid-cols-2 gap-2 px-0.5 py-1 text-xs sm:text-sm"
                   >
-                    {formatArrivalTime(arrival)}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-end gap-1 sm:gap-1.5 min-w-0">
-                  {getLoadBadge(arrival.load)}
-                  {getBusTypeBadge(arrival.type)}
-                </div>
-              </div>
-            );
-          })}
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <span
+                        className={cn(
+                          "arrival-time transition-colors duration-2000 ease-out",
+                          {
+                            "text-green-600 font-semibold": isChanged,
+                            "font-semibold text-primary": isArriving && !isChanged,
+                            "text-foreground": !isArriving && !isChanged,
+                          },
+                        )}
+                      >
+                        {formatArrivalTime(arrivalEntry.arrival)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-end gap-1 min-w-0">
+                      {getLoadBadge(arrivalEntry.arrival.load, "compact")}
+                      {getBusTypeBadge(arrivalEntry.arrival.type, "compact")}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 });
 
-const getLoadBadge = (load: string) => {
+const getLoadBadge = (load: string, size: "default" | "compact" = "default") => {
   const badges: Record<string, { label: string; className: string }> = {
     SEA: {
       label: "Seats",
@@ -297,14 +350,18 @@ const getLoadBadge = (load: string) => {
 
   return (
     <div
-      className={`flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-medium ${badge.className}`}
+      className={cn(
+        "flex items-center justify-center rounded-md font-medium",
+        size === "compact" ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-xs",
+        badge.className,
+      )}
     >
       <span className="shrink-0">{badge.label}</span>
     </div>
   );
 };
 
-const getBusTypeBadge = (type: string) => {
+const getBusTypeBadge = (type: string, size: "default" | "compact" = "default") => {
   const busTypes: Record<
     string,
     {
@@ -341,11 +398,21 @@ const getBusTypeBadge = (type: string) => {
 
   return (
     <div
-      className={`flex items-center justify-center gap-1 min-w-[80px] rounded-md px-1.5 sm:px-2 py-0.5 text-xs font-medium ${busType.variant}`}
+      className={cn(
+        "flex items-center justify-center gap-1 rounded-md font-medium",
+        size === "compact"
+          ? "min-w-[62px] px-1 py-0.5 text-[10px] sm:text-[11px]"
+          : "min-w-[80px] px-1.5 sm:px-2 py-0.5 text-xs",
+        busType.variant,
+      )}
     >
       {busType.icon}
-      <span className="hidden sm:inline">{busType.label}</span>
-      <span className="sm:hidden">{busType.shortLabel}</span>
+      <span className="hidden sm:inline">
+        {busType.label}
+      </span>
+      <span className="sm:hidden">
+        {busType.shortLabel}
+      </span>
     </div>
   );
 };
