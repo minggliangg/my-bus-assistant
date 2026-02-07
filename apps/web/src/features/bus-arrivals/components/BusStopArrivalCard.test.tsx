@@ -134,17 +134,7 @@ describe("BusStopCard", () => {
       });
     });
 
-    test("displays arrival times with clock icon", async () => {
-      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
-      await waitFor(() => {
-        // Clock icons should be present for arrivals
-        const clockIcon =
-          document.querySelector('[data-lucide="clock"]') ||
-          document.querySelector("svg");
-        expect(clockIcon).toBeInTheDocument();
-      });
-    });
   });
 
   // Bus Type Badges

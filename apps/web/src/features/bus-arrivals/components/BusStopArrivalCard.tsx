@@ -16,7 +16,6 @@ import { cn } from "@/lib/utils";
 import {
   ArrowLeftRight,
   Bus,
-  Clock,
   Layers,
   Loader2,
   MapPin,
@@ -160,7 +159,6 @@ export const BusStopArrivalCard = ({
       {isStale && !isFetching && (
         <CardFooter className="pt-0">
           <div className="flex w-full items-center justify-end gap-2 border-t pt-4 text-amber-700 dark:text-amber-400">
-            <Clock className="h-4 w-4" />
             <span className="text-xs font-medium">Cached data shown</span>
           </div>
         </CardFooter>
@@ -228,7 +226,6 @@ const BusServiceRow = memo(({ service, changedFields }: BusServiceRowProps) => {
             className="flex shrink-0 items-center gap-2"
             data-testid={`primary-arrival-${service.serviceNo}`}
           >
-            <Clock className="h-5 w-5 text-primary" />
             <span
               className={cn(
                 "arrival-time text-2xl font-bold leading-none transition-colors duration-2000 ease-out sm:text-3xl",
@@ -300,7 +297,6 @@ const BusServiceRow = memo(({ service, changedFields }: BusServiceRowProps) => {
                     className="grid grid-cols-2 gap-2 px-0.5 py-1 text-xs sm:text-sm"
                   >
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                       <span
                         className={cn(
                           "arrival-time transition-colors duration-2000 ease-out",

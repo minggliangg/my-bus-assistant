@@ -1,7 +1,6 @@
 import {
   MapPin,
   MapPinOff,
-  Clock,
   AlertCircle,
   Loader2,
   Navigation,
@@ -104,7 +103,7 @@ export const NearestBusStopsDialog = ({
                 {isPermissionDenied ? (
                   <MapPinOff className="h-12 w-12 text-destructive" />
                 ) : error.toLowerCase().includes("timeout") ? (
-                  <Clock className="h-12 w-12 text-muted-foreground" />
+                  <AlertCircle className="h-12 w-12 text-muted-foreground" />
                 ) : (
                   <AlertCircle className="h-12 w-12 text-muted-foreground" />
                 )}
