@@ -254,11 +254,12 @@ const BusServiceRow = memo(({ service, changedFields }: BusServiceRowProps) => {
 
       {/* Route Info */}
       {hasRoute && (
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+        <div className="flex flex-col items-start gap-1.5 text-xs text-muted-foreground min-w-0 sm:flex-row sm:items-center">
           <span className="truncate shrink min-w-0">
             {primaryArrival?.arrival.originName ?? primaryArrival?.arrival.originCode}
           </span>
-          <span className="shrink-0">→</span>
+          <span className="hidden sm:inline shrink-0">→</span>
+          <span className="sm:hidden shrink-0">↓</span>
           <span className="truncate shrink min-w-0">
             {primaryArrival?.arrival.destinationName ??
               primaryArrival?.arrival.destinationCode}
@@ -403,10 +404,10 @@ const getBusTypeBadge = (type: string, size: "default" | "compact" = "default") 
       )}
     >
       {busType.icon}
-      <span className="hidden sm:inline">
+      <span className="hidden xs:inline">
         {busType.label}
       </span>
-      <span className="sm:hidden">
+      <span className="xs:hidden">
         {busType.shortLabel}
       </span>
     </div>
