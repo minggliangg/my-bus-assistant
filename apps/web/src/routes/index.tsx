@@ -65,11 +65,11 @@ function Home() {
     <div className="space-y-6">
       <header className="relative">
         <div className="flex items-start justify-center">
-          <div className="space-y-2 text-center">
-            <h1 className="text-3xl font-bold tracking-tight">
+          <div className="space-y-1.5 text-center">
+            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               My Bus Assistant
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Real-time bus arrival information at your fingertips
             </p>
           </div>
@@ -79,7 +79,7 @@ function Home() {
         </div>
       </header>
 
-      <div className="flex gap-2 items-start">
+      <div className="flex gap-2 items-start rounded-xl bg-card border p-2 shadow-sm">
         <div className="flex-1 min-w-0">
           <BusStopSearchComboBox
             onBusStopSelect={handleBusStopSelect}
@@ -110,7 +110,8 @@ function Home() {
         onRetry={retry}
       />
 
-      <footer className="pt-8 pb-4 text-center">
+      <footer className="pt-10 pb-6 text-center">
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-6" />
         <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
           <Link
             to="/about"
@@ -118,7 +119,7 @@ function Home() {
           >
             About & Attribution
           </Link>
-          <span>•</span>
+          <span className="text-border">•</span>
           <a
             href="https://minggliangg.com"
             target="_blank"

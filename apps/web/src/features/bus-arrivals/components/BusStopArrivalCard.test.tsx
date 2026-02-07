@@ -161,6 +161,19 @@ describe("BusStopCard", () => {
         expect(badges.length).toBeGreaterThan(0);
       });
     });
+
+    test("load dot indicators have accessible labels for small screens", async () => {
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
+
+      await waitFor(() => {
+        const dots = screen.getAllByRole("img", { name: /Seats|Standing|Limited/ });
+        expect(dots.length).toBeGreaterThan(0);
+        dots.forEach((dot) => {
+          expect(dot).toHaveAttribute("aria-label");
+          expect(dot).toHaveAttribute("title");
+        });
+      });
+    });
   });
 
   // Multiple Arrivals

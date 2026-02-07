@@ -112,27 +112,27 @@ export const BusStopArrivalCard = ({
   }
 
   return (
-    <Card>
+    <Card className="shadow-md">
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 flex-1">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
               <MapPin className="h-6 w-6 text-primary" />
             </div>
             <div className="flex flex-col text-left">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Bus Stop
               </p>
-              <h3 className="text-lg font-bold text-foreground">
+              <h3 className="text-lg font-bold text-foreground tracking-tight">
                 {busStop.busStopCode}
               </h3>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <FavoriteToggleButton busStopCode={busStop.busStopCode} />
-            <div className="flex h-9 items-center rounded-lg bg-muted px-3">
-              <Bus className="h-4 w-4 text-muted-foreground mr-2" />
-              <span className="text-sm font-semibold">
+            <div className="flex h-9 items-center rounded-lg bg-primary/5 border border-primary/10 px-3">
+              <Bus className="h-4 w-4 text-primary/60 mr-2" />
+              <span className="text-sm font-bold text-primary/80">
                 {busStop.services.length}
               </span>
             </div>
@@ -158,7 +158,8 @@ export const BusStopArrivalCard = ({
 
       {isStale && !isFetching && (
         <CardFooter className="pt-0">
-          <div className="flex w-full items-center justify-end gap-2 border-t pt-4 text-amber-700 dark:text-amber-400">
+          <div className="flex w-full items-center justify-end gap-2 border-t border-dashed pt-4 text-amber-600 dark:text-amber-400">
+            <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
             <span className="text-xs font-medium">Cached data shown</span>
           </div>
         </CardFooter>
@@ -177,12 +178,59 @@ type ArrivalEntry = {
   index: number;
 };
 
+const ArrivalRow = ({
+  arrivalEntry,
+  serviceNo,
+  changedFields,
+  isPrimary,
+}: {
+  arrivalEntry: ArrivalEntry;
+  serviceNo: string;
+  changedFields: ChangedField[];
+  isPrimary: boolean;
+}) => {
+  const isChanged = changedFields.some(
+    (field) =>
+      field.serviceNo === serviceNo &&
+      field.busIndex === arrivalEntry.index,
+  );
+  const isArriving = getArrivalInMinutes(arrivalEntry.arrival) <= 1;
+  const size = isPrimary ? "default" as const : "compact" as const;
+
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-between gap-2",
+        isPrimary ? "py-0.5" : "py-0.5",
+      )}
+      data-testid={isPrimary ? `primary-arrival-${serviceNo}` : undefined}
+    >
+      <span
+        className={cn(
+          "arrival-time font-semibold tabular-nums transition-colors duration-2000 ease-out",
+          isPrimary ? "text-xl sm:text-2xl" : "text-sm",
+          {
+            "text-green-600": isChanged,
+            "text-primary": isArriving && !isChanged,
+            "text-foreground": !isArriving && !isChanged,
+          },
+        )}
+      >
+        {formatArrivalTime(arrivalEntry.arrival)}
+      </span>
+      <div className="flex items-center gap-1.5">
+        {getLoadBadge(arrivalEntry.arrival.load, size)}
+        {getBusTypeBadge(arrivalEntry.arrival.type, size)}
+      </div>
+    </div>
+  );
+};
+
 const BusServiceRow = memo(({ service, changedFields }: BusServiceRowProps) => {
   const arrivalCandidates: ArrivalEntry[] = [service.nextBus, service.nextBus2, service.nextBus3]
     .map((arrival, index) => (arrival ? { arrival, index } : null))
     .filter((entry): entry is ArrivalEntry => Boolean(entry));
 
-  // Check if this service's arrival times have changed
   const hasChanges = changedFields.some(
     (field) => field.serviceNo === service.serviceNo,
   );
@@ -194,132 +242,55 @@ const BusServiceRow = memo(({ service, changedFields }: BusServiceRowProps) => {
 
   return (
     <div
-      className="rounded-lg border bg-card p-3 sm:p-4 space-y-3"
+      className="rounded-lg border bg-card p-3 sm:p-4 transition-colors hover:border-primary/20"
       data-testid={`service-row-${service.serviceNo}`}
     >
-      {/* Service Number + Primary Arrival */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <div
-            className={cn(
-              "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-              getOperatorBadgeColors(service.operator),
-            )}
-          >
-            <span className="text-sm font-bold">{service.serviceNo}</span>
-          </div>
-          {hasChanges && (
-            <div className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 shrink-0">
-              <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-xs text-green-700 font-medium">
-                Updated
-              </span>
-            </div>
+      {/* Header: Service badge + operator + updated indicator */}
+      <div className="flex items-center gap-2.5 mb-2">
+        <div
+          className={cn(
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+            getOperatorBadgeColors(service.operator),
           )}
+        >
+          <span className="text-sm font-bold">{service.serviceNo}</span>
+        </div>
+        <div className="flex flex-col min-w-0">
           <span className="text-xs text-muted-foreground truncate">
             {getOperatorFullName(service.operator)}
           </span>
+          {hasRoute && (
+            <span className="text-[11px] text-muted-foreground/70 truncate">
+              {primaryArrival?.arrival.originName ?? primaryArrival?.arrival.originCode}
+              {" → "}
+              {primaryArrival?.arrival.destinationName ?? primaryArrival?.arrival.destinationCode}
+            </span>
+          )}
         </div>
-
-        {primaryArrival && (
-          <div
-            className="flex shrink-0 items-center gap-2"
-            data-testid={`primary-arrival-${service.serviceNo}`}
-          >
-            <span
-              className={cn(
-                "arrival-time text-2xl font-bold leading-none transition-colors duration-2000 ease-out sm:text-3xl",
-                {
-                  "text-green-600": changedFields.some(
-                    (field) =>
-                      field.serviceNo === service.serviceNo &&
-                      field.busIndex === primaryArrival.index,
-                  ),
-                  "text-primary": getArrivalInMinutes(primaryArrival.arrival) <= 1,
-                  "text-foreground":
-                    getArrivalInMinutes(primaryArrival.arrival) > 1 &&
-                    !changedFields.some(
-                      (field) =>
-                        field.serviceNo === service.serviceNo &&
-                        field.busIndex === primaryArrival.index,
-                    ),
-                },
-              )}
-            >
-              {formatArrivalTime(primaryArrival.arrival)}
+        {hasChanges && (
+          <div className="ml-auto flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-0.5 shrink-0">
+            <div className="h-1.5 w-1.5 bg-green-500 rounded-full animate-pulse" />
+            <span className="text-[10px] text-green-700 dark:text-green-400 font-medium">
+              Updated
             </span>
           </div>
         )}
       </div>
 
-      {/* Route Info */}
-      {hasRoute && (
-        <div className="flex flex-col items-start gap-1.5 text-xs text-muted-foreground min-w-0 sm:flex-row sm:items-center">
-          <span className="truncate shrink min-w-0">
-            {primaryArrival?.arrival.originName ?? primaryArrival?.arrival.originCode}
-          </span>
-          <span className="hidden sm:inline shrink-0">→</span>
-          <span className="sm:hidden shrink-0">↓</span>
-          <span className="truncate shrink min-w-0">
-            {primaryArrival?.arrival.destinationName ??
-              primaryArrival?.arrival.destinationCode}
-          </span>
-        </div>
-      )}
-
-      {/* Arrivals */}
+      {/* Arrival rows - each row has time + badges together */}
       {arrivalCandidates.length === 0 ? (
-        <div className="text-sm text-muted-foreground">No arrivals</div>
+        <div className="text-sm text-muted-foreground pl-1 mt-1">No arrivals</div>
       ) : (
-        <div className="space-y-2">
-          {primaryArrival && (
-            <div className="flex items-center justify-end gap-1.5 sm:gap-2">
-              {getLoadBadge(primaryArrival.arrival.load)}
-              {getBusTypeBadge(primaryArrival.arrival.type)}
-            </div>
-          )}
-
-          {secondaryArrivals.length > 0 && (
-            <div
-              className="space-y-1"
-              data-testid={`secondary-arrivals-${service.serviceNo}`}
-            >
-              {secondaryArrivals.map((arrivalEntry) => {
-                const isChanged = changedFields.some(
-                  (field) =>
-                    field.serviceNo === service.serviceNo &&
-                    field.busIndex === arrivalEntry.index,
-                );
-                const isArriving = getArrivalInMinutes(arrivalEntry.arrival) <= 1;
-
-                return (
-                  <div
-                    key={arrivalEntry.index}
-                    className="grid grid-cols-2 gap-2 px-0.5 py-1 text-xs sm:text-sm"
-                  >
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span
-                        className={cn(
-                          "arrival-time transition-colors duration-2000 ease-out",
-                          {
-                            "text-green-600 font-semibold": isChanged,
-                            "font-semibold text-primary": isArriving && !isChanged,
-                            "text-foreground": !isArriving && !isChanged,
-                          },
-                        )}
-                      >
-                        {formatArrivalTime(arrivalEntry.arrival)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-end gap-1 min-w-0">
-                      {getLoadBadge(arrivalEntry.arrival.load, "compact")}
-                      {getBusTypeBadge(arrivalEntry.arrival.type, "compact")}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+        <div className="pl-1 mt-1 space-y-1" data-testid={secondaryArrivals.length > 0 ? `secondary-arrivals-${service.serviceNo}` : undefined}>
+          {arrivalCandidates.map((entry, i) => (
+            <ArrivalRow
+              key={entry.index}
+              arrivalEntry={entry}
+              serviceNo={service.serviceNo}
+              changedFields={changedFields}
+              isPrimary={i === 0}
+            />
+          ))}
         </div>
       )}
     </div>
@@ -327,18 +298,21 @@ const BusServiceRow = memo(({ service, changedFields }: BusServiceRowProps) => {
 });
 
 const getLoadBadge = (load: string, size: "default" | "compact" = "default") => {
-  const badges: Record<string, { label: string; className: string }> = {
+  const badges: Record<string, { label: string; dotColor: string; className: string }> = {
     SEA: {
       label: "Seats",
-      className: "bg-green-600 text-white",
+      dotColor: "bg-emerald-500",
+      className: "bg-emerald-500 text-white dark:bg-emerald-600",
     },
     SDA: {
       label: "Standing",
-      className: "bg-amber-600 text-white",
+      dotColor: "bg-amber-500",
+      className: "bg-amber-500 text-white dark:bg-amber-600",
     },
     LSD: {
       label: "Limited",
-      className: "bg-red-600 text-white",
+      dotColor: "bg-rose-500",
+      className: "bg-rose-500 text-white dark:bg-rose-600",
     },
   };
 
@@ -346,15 +320,28 @@ const getLoadBadge = (load: string, size: "default" | "compact" = "default") => 
   if (!badge) return null;
 
   return (
-    <div
-      className={cn(
-        "flex items-center justify-center rounded-md font-medium",
-        size === "compact" ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-xs",
-        badge.className,
-      )}
-    >
-      <span className="shrink-0">{badge.label}</span>
-    </div>
+    <>
+      {/* Dot indicator below xs breakpoint */}
+      <div
+        className={cn(
+          "xs:hidden h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-background",
+          badge.dotColor,
+        )}
+        role="img"
+        aria-label={badge.label}
+        title={badge.label}
+      />
+      {/* Full badge at xs and above */}
+      <div
+        className={cn(
+          "hidden xs:flex items-center justify-center rounded-md font-medium",
+          size === "compact" ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-xs",
+          badge.className,
+        )}
+      >
+        <span className="shrink-0">{badge.label}</span>
+      </div>
+    </>
   );
 };
 

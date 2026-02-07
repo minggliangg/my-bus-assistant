@@ -56,9 +56,9 @@ export const FavoriteBusStops = ({
 
   return (
     <div className={cn("min-h-[48px]", className)}>
-      <div className="flex items-center gap-2 mb-2">
-        <Star className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium">Favorites</span>
+      <div className="flex items-center gap-2 mb-2.5">
+        <Star className="h-3.5 w-3.5 text-amber-500" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Favorites</span>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -72,7 +72,12 @@ export const FavoriteBusStops = ({
             <Badge
               key={code}
               variant={isSelected ? "default" : "outline"}
-              className="cursor-pointer hover:shadow-md transition-shadow"
+              className={cn(
+                "cursor-pointer transition-all",
+                isSelected
+                  ? "shadow-md shadow-primary/20"
+                  : "hover:shadow-md hover:border-primary/30",
+              )}
               onClick={() => onBusStopSelect(code)}
             >
               <span className="truncate max-w-[150px] sm:max-w-[200px]">

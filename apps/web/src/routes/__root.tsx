@@ -15,7 +15,7 @@ function RootComponent() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 text-foreground">
+    <div className="min-h-screen bg-background p-4 sm:p-6 text-foreground antialiased">
       <div className="mx-auto max-w-2xl">
         <Outlet />
       </div>
