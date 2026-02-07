@@ -73,9 +73,13 @@ describe("useNearbyStore", () => {
   });
 
   it("should handle permission denied error", async () => {
-    const mockError = new Error("Permission denied");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (mockError as any).name = "PermissionDeniedError";
+    const mockError = {
+      code: 1, // PERMISSION_DENIED
+      message: "User denied Geolocation",
+      PERMISSION_DENIED: 1,
+      POSITION_UNAVAILABLE: 2,
+      TIMEOUT: 3,
+    } as GeolocationPositionError;
 
     mockGeolocation({
       getCurrentPosition: vi.fn((_, error) => error?.(mockError)),
@@ -91,9 +95,13 @@ describe("useNearbyStore", () => {
   });
 
   it("should handle timeout error", async () => {
-    const mockError = new Error("Timeout");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (mockError as any).name = "TimeoutError";
+    const mockError = {
+      code: 3, // TIMEOUT
+      message: "Timeout expired",
+      PERMISSION_DENIED: 1,
+      POSITION_UNAVAILABLE: 2,
+      TIMEOUT: 3,
+    } as GeolocationPositionError;
 
     mockGeolocation({
       getCurrentPosition: vi.fn((_, error) => error?.(mockError)),

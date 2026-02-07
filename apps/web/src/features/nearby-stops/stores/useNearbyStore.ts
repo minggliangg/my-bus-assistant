@@ -66,13 +66,28 @@ const useNearbyStore = create<NearbyStore>((set, get) => ({
       });
     } catch (error) {
       let errorMessage = "Unable to get your location";
-      if (error instanceof Error) {
-        if (error.name === "PermissionDeniedError") {
-          errorMessage = "Location permission denied";
-        } else if (error.name === "TimeoutError") {
-          errorMessage = "Location request timed out";
+
+      // Check if error has a code property (GeolocationPositionError)
+      if (error && typeof error === "object" && "code" in error) {
+        const geoError = error as GeolocationPositionError;
+        switch (geoError.code) {
+          case 1: // PERMISSION_DENIED
+            errorMessage = "Location permission denied";
+            break;
+          case 2: // POSITION_UNAVAILABLE
+            errorMessage = "Location information unavailable";
+            break;
+          case 3: // TIMEOUT
+            errorMessage = "Location request timed out";
+            break;
+        }
+      } else if (error instanceof Error) {
+        // Fallback for other error types
+        if (error.message.toLowerCase().includes("secure")) {
+          errorMessage = "Location requires HTTPS connection";
         }
       }
+
       set({
         loadingLocation: false,
         locationError: errorMessage,
