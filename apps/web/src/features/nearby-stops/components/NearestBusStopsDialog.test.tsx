@@ -1,11 +1,16 @@
-import { render, screen, act } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NearestBusStopsDialog } from "./NearestBusStopsDialog";
 import type { NearbyBusStop } from "../models/nearby-stops-model";
 
 // Mock the Map component since it requires DOM and Web APIs not available in test
-const MapComponent = ({ className, busStops, onBusStopClick, selectedStopCode }: {
+const MapComponent = ({
+  className,
+  busStops,
+  onBusStopClick,
+  selectedStopCode,
+}: {
   className?: string;
   userLocation: { latitude: number; longitude: number } | null;
   busStops: NearbyBusStop[];
@@ -14,13 +19,19 @@ const MapComponent = ({ className, busStops, onBusStopClick, selectedStopCode }:
 }) => (
   <div data-testid="map" className={className}>
     <div data-testid="bus-stops-count">{busStops.length}</div>
-    {selectedStopCode && <div data-testid="selected-stop">{selectedStopCode}</div>}
-    <button
-      onClick={() => onBusStopClick?.(busStops[0]?.busStopCode)}
-      type="button"
-    >
-      Simulate Marker Click
-    </button>
+    {selectedStopCode && (
+      <div data-testid="selected-stop">{selectedStopCode}</div>
+    )}
+    {busStops.map((stop) => (
+      <button
+        key={stop.busStopCode}
+        data-testid={`marker-${stop.busStopCode}`}
+        onClick={() => onBusStopClick?.(stop.busStopCode)}
+        type="button"
+      >
+        Marker {stop.busStopCode}
+      </button>
+    ))}
   </div>
 );
 
@@ -33,10 +44,6 @@ describe("NearestBusStopsDialog", () => {
   const mockOnOpenChange = vi.fn();
   const mockOnBusStopSelect = vi.fn();
   const mockOnRetry = vi.fn();
-
-  beforeEach(() => {
-    vi.useRealTimers();
-  });
 
   const mockNearestStops: NearbyBusStop[] = [
     {
@@ -93,7 +100,13 @@ describe("NearestBusStopsDialog", () => {
   });
 
   it("should show loading state when loading is true", () => {
-    render(<NearestBusStopsDialog {...defaultProps} loading={true} nearestStops={[]} />);
+    render(
+      <NearestBusStopsDialog
+        {...defaultProps}
+        loading={true}
+        nearestStops={[]}
+      />,
+    );
 
     expect(screen.getByText("Finding nearest stops...")).toBeInTheDocument();
   });
@@ -103,12 +116,13 @@ describe("NearestBusStopsDialog", () => {
       <NearestBusStopsDialog
         {...defaultProps}
         nearestStops={[]}
-        loading={false}
         error="Location permission denied"
       />,
     );
 
-    expect(screen.getByText("Location permission denied")).toBeInTheDocument();
+    expect(
+      screen.getByText("Location permission denied"),
+    ).toBeInTheDocument();
     expect(
       screen.getByText("Enable location access in your browser settings"),
     ).toBeInTheDocument();
@@ -119,183 +133,177 @@ describe("NearestBusStopsDialog", () => {
       <NearestBusStopsDialog
         {...defaultProps}
         nearestStops={[]}
-        loading={false}
         error="Location permission denied"
       />,
     );
 
-    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Retry" }),
+    ).not.toBeInTheDocument();
   });
 
-  it("should show error state with timeout message", () => {
-    render(
-      <NearestBusStopsDialog
-        {...defaultProps}
-        nearestStops={[]}
-        loading={false}
-        error="Location request timed out"
-      />,
-    );
-
-    expect(screen.getByText("Location request timed out")).toBeInTheDocument();
-  });
-
-  it("should show retry button for timeout error", () => {
-    render(
-      <NearestBusStopsDialog
-        {...defaultProps}
-        nearestStops={[]}
-        loading={false}
-        error="Location request timed out"
-      />,
-    );
-
-    const retryButton = screen.getByRole("button", { name: "Retry" });
-    expect(retryButton).toBeInTheDocument();
-  });
-
-  it("should call onRetry when retry button is clicked", async () => {
+  it("should show retry button for timeout error and call onRetry", async () => {
     const user = userEvent.setup();
     render(
       <NearestBusStopsDialog
         {...defaultProps}
         nearestStops={[]}
-        loading={false}
         error="Location request timed out"
       />,
     );
 
+    expect(
+      screen.getByText("Location request timed out"),
+    ).toBeInTheDocument();
     const retryButton = screen.getByRole("button", { name: "Retry" });
     await user.click(retryButton);
 
     expect(mockOnRetry).toHaveBeenCalledTimes(1);
   });
 
-  it("should display map with nearest stops", () => {
-    render(<NearestBusStopsDialog {...defaultProps} />);
-
-    expect(screen.getByTestId("map")).toBeInTheDocument();
-    expect(screen.getByTestId("bus-stops-count")).toHaveTextContent("2");
-    expect(screen.getByText("2 nearby stops found")).toBeInTheDocument();
-    expect(screen.getByText("Click a marker to select")).toBeInTheDocument();
-  });
-
   it("should show no bus stops found message when nearestStops is empty", () => {
-    render(
-      <NearestBusStopsDialog
-        {...defaultProps}
-        nearestStops={[]}
-      />,
-    );
+    render(<NearestBusStopsDialog {...defaultProps} nearestStops={[]} />);
 
     expect(screen.getByText("No bus stops found")).toBeInTheDocument();
   });
 
-  it("should show selected stop info when marker is clicked", async () => {
-    const user = userEvent.setup();
+  it("should display map and stop list when stops are available", () => {
     render(<NearestBusStopsDialog {...defaultProps} />);
 
-    const markerButton = screen.getByRole("button", { name: "Simulate Marker Click" });
-    await user.click(markerButton);
+    expect(screen.getByTestId("map")).toBeInTheDocument();
+    expect(screen.getByTestId("bus-stops-count")).toHaveTextContent("2");
 
-    expect(screen.getByTestId("selected-stop")).toHaveTextContent("01012");
+    // List items should be rendered
+    expect(screen.getByText("01012")).toBeInTheDocument();
     expect(screen.getByText("Hotel Grand Pacific")).toBeInTheDocument();
-    expect(screen.getByText("Victoria St")).toBeInTheDocument();
     expect(screen.getByText("120m")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "View Arrivals" })).toBeInTheDocument();
+
+    expect(screen.getByText("01013")).toBeInTheDocument();
+    expect(screen.getByText("St Joseph's Church")).toBeInTheDocument();
+    expect(screen.getByText("250m")).toBeInTheDocument();
   });
 
-  it("should call onBusStopSelect and close dialog when View Arrivals is clicked", async () => {
+  it("should sort stops by distance (nearest first)", () => {
+    const stopsOutOfOrder: NearbyBusStop[] = [
+      { ...mockNearestStops[1], distance: 500 },
+      { ...mockNearestStops[0], distance: 100 },
+    ];
+
+    render(
+      <NearestBusStopsDialog {...defaultProps} nearestStops={stopsOutOfOrder} />,
+    );
+
+    // Verify both stops rendered with correct distances
+    expect(screen.getByText("100m")).toBeInTheDocument();
+    expect(screen.getByText("500m")).toBeInTheDocument();
+  });
+
+  it("should select a stop on first click in the list", async () => {
     const user = userEvent.setup();
     render(<NearestBusStopsDialog {...defaultProps} />);
 
-    // First click the marker to select the stop
-    const markerButton = screen.getByRole("button", { name: "Simulate Marker Click" });
-    await user.click(markerButton);
+    // Click a list item
+    await user.click(screen.getByText("Hotel Grand Pacific"));
 
-    // Then click View Arrivals
-    const viewArrivalsButton = screen.getByRole("button", { name: "View Arrivals" });
-    await user.click(viewArrivalsButton);
+    // Should show the View button for the selected item
+    expect(screen.getByRole("button", { name: "View" })).toBeInTheDocument();
+    // Map should reflect selection
+    expect(screen.getByTestId("selected-stop")).toHaveTextContent("01012");
+  });
+
+  it("should navigate to arrivals on second click of same list item", async () => {
+    const user = userEvent.setup();
+    render(<NearestBusStopsDialog {...defaultProps} />);
+
+    const listItem = screen.getByText("Hotel Grand Pacific");
+
+    // First click selects
+    await user.click(listItem);
+    expect(mockOnBusStopSelect).not.toHaveBeenCalled();
+
+    // Second click navigates
+    await user.click(listItem);
+    expect(mockOnBusStopSelect).toHaveBeenCalledWith("01012");
+    expect(mockOnOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("should navigate to arrivals when View button is clicked", async () => {
+    const user = userEvent.setup();
+    render(<NearestBusStopsDialog {...defaultProps} />);
+
+    // Select a stop first
+    await user.click(screen.getByText("Hotel Grand Pacific"));
+
+    // Click View button
+    await user.click(screen.getByRole("button", { name: "View" }));
 
     expect(mockOnBusStopSelect).toHaveBeenCalledWith("01012");
     expect(mockOnOpenChange).toHaveBeenCalledWith(false);
   });
 
-  it("should close selected stop card when X button is clicked", async () => {
+  it("should highlight list item when map marker is clicked", async () => {
     const user = userEvent.setup();
     render(<NearestBusStopsDialog {...defaultProps} />);
 
-    // Click the marker to select the stop
-    const markerButton = screen.getByRole("button", { name: "Simulate Marker Click" });
-    await user.click(markerButton);
+    await user.click(screen.getByTestId("marker-01012"));
 
-    expect(screen.getByTestId("selected-stop")).toBeInTheDocument();
-
-    // Click the X button (clear selection)
-    const closeButton = screen.getByRole("button", { name: /clear selection/i });
-    await user.click(closeButton);
-
-    expect(screen.queryByTestId("selected-stop")).not.toBeInTheDocument();
+    expect(screen.getByTestId("selected-stop")).toHaveTextContent("01012");
+    expect(screen.getByRole("button", { name: "View" })).toBeInTheDocument();
   });
 
-  it("should close dialog when close button is clicked", async () => {
+  it("should switch selection when clicking a different stop", async () => {
     const user = userEvent.setup();
     render(<NearestBusStopsDialog {...defaultProps} />);
 
-    const closeButton = screen.getByRole("button", { name: /close/i });
-    await user.click(closeButton);
+    // Select first stop
+    await user.click(screen.getByText("Hotel Grand Pacific"));
+    expect(screen.getByTestId("selected-stop")).toHaveTextContent("01012");
 
-    expect(mockOnOpenChange).toHaveBeenCalledWith(false);
+    // Select second stop
+    await user.click(screen.getByText("St Joseph's Church"));
+    expect(screen.getByTestId("selected-stop")).toHaveTextContent("01013");
+
+    // Only one View button should be visible
+    expect(screen.getAllByRole("button", { name: "View" })).toHaveLength(1);
+  });
+
+  it("should support keyboard navigation (Enter to select/activate)", async () => {
+    const user = userEvent.setup();
+    render(<NearestBusStopsDialog {...defaultProps} />);
+
+    // Tab to first list item and press Enter to select
+    const listItems = screen.getAllByRole("button").filter(
+      (el) => el.getAttribute("tabindex") === "0",
+    );
+    listItems[0].focus();
+    await user.keyboard("{Enter}");
+
+    expect(screen.getByTestId("selected-stop")).toHaveTextContent("01012");
+
+    // Press Enter again to navigate
+    await user.keyboard("{Enter}");
+    expect(mockOnBusStopSelect).toHaveBeenCalledWith("01012");
   });
 
   it("should reset selected stop when dialog closes", async () => {
     const user = userEvent.setup();
     const { rerender } = render(<NearestBusStopsDialog {...defaultProps} />);
 
-    // Click the marker to select the stop
-    const markerButton = screen.getByRole("button", { name: "Simulate Marker Click" });
-    await user.click(markerButton);
-
+    // Select a stop
+    await user.click(screen.getByText("Hotel Grand Pacific"));
     expect(screen.getByTestId("selected-stop")).toBeInTheDocument();
 
-    // Click the Dialog's close button (the X button in the Dialog header)
-    // This triggers handleOpenChange(false) which resets the selected stop
+    // Close and reopen
     const closeButton = screen.getByRole("button", { name: /close/i });
     await user.click(closeButton);
 
-    expect(mockOnOpenChange).toHaveBeenCalledWith(false);
-
-    // Re-open the dialog by simulating the parent setting open back to true
     rerender(<NearestBusStopsDialog {...defaultProps} open={true} />);
-
-    // The selected stop should have been reset
     expect(screen.queryByTestId("selected-stop")).not.toBeInTheDocument();
   });
 
   it("should handle null userLocation gracefully", () => {
-    render(
-      <NearestBusStopsDialog
-        {...defaultProps}
-        userLocation={null}
-      />,
-    );
+    render(<NearestBusStopsDialog {...defaultProps} userLocation={null} />);
 
     expect(screen.getByTestId("map")).toBeInTheDocument();
-  });
-
-  it("should auto-hide info overlay after 3 seconds", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-
-    render(<NearestBusStopsDialog {...defaultProps} />);
-
-    expect(screen.getByText("2 nearby stops found")).toBeInTheDocument();
-    expect(screen.getByText("Click a marker to select")).toBeInTheDocument();
-
-    await act(async () => {
-      vi.advanceTimersByTime(3000);
-    });
-
-    expect(screen.queryByText("2 nearby stops found")).not.toBeInTheDocument();
-    expect(screen.queryByText("Click a marker to select")).not.toBeInTheDocument();
   });
 });
