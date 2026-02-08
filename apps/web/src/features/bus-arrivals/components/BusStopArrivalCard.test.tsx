@@ -134,6 +134,57 @@ describe("BusStopCard", () => {
       });
     });
 
+    test("uses mobile-friendly route layout when route text is long", async () => {
+      const mockCachedData = {
+        busStopCode: "83139",
+        services: [
+          {
+            serviceNo: "67",
+            operator: "SMRT",
+            nextBus: {
+              originCode: "01012",
+              destinationCode: "96049",
+              estimatedArrival: new Date(Date.now() + 2 * 60000).toISOString(),
+              latitude: 1.296848,
+              longitude: 103.852535,
+              visitNumber: 1,
+              load: "SEA",
+              feature: "WAB",
+              type: "DD",
+              originName: "Choa Chu Kang Int",
+              destinationName:
+                "Tampines Integrated Transport Hub and Interchange Terminal",
+            },
+            nextBus2: null,
+            nextBus3: null,
+          },
+        ],
+      };
+
+      localStorage.setItem(
+        "bus-stop-data-83139",
+        JSON.stringify(mockCachedData),
+      );
+      localStorage.setItem("bus-stop-last-update-83139", Date.now().toString());
+      useBusStore.setState({
+        changedFields: [{ serviceNo: "67", busIndex: 0, changedAt: Date.now() }],
+      });
+
+      renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
+
+      await waitFor(() => {
+        const route = screen.getByTestId("service-route-67");
+        const header = screen.getByTestId("service-header-67");
+        const updated = screen.getByTestId("service-updated-67");
+
+        expect(route).toBeInTheDocument();
+        expect(route).toHaveClass("whitespace-normal");
+        expect(route).toHaveClass("break-words");
+        expect(route).not.toHaveClass("truncate");
+        expect(header).toHaveClass("flex-wrap");
+        expect(updated).toBeInTheDocument();
+      });
+    });
 
   });
 

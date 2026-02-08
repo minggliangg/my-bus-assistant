@@ -246,7 +246,10 @@ const BusServiceRow = memo(({ service, changedFields }: BusServiceRowProps) => {
       data-testid={`service-row-${service.serviceNo}`}
     >
       {/* Header: Service badge + operator + updated indicator */}
-      <div className="flex items-center gap-2.5 mb-2">
+      <div
+        className="mb-2 flex flex-wrap items-start gap-2.5"
+        data-testid={`service-header-${service.serviceNo}`}
+      >
         <div
           className={cn(
             "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
@@ -255,12 +258,15 @@ const BusServiceRow = memo(({ service, changedFields }: BusServiceRowProps) => {
         >
           <span className="text-sm font-bold">{service.serviceNo}</span>
         </div>
-        <div className="flex flex-col min-w-0">
+        <div className="flex min-w-0 flex-1 flex-col">
           <span className="text-xs text-muted-foreground truncate">
             {getOperatorFullName(service.operator)}
           </span>
           {hasRoute && (
-            <span className="text-[11px] text-muted-foreground/70 truncate">
+            <span
+              className="text-[11px] leading-snug text-muted-foreground/70 whitespace-normal break-words"
+              data-testid={`service-route-${service.serviceNo}`}
+            >
               {primaryArrival?.arrival.originName ?? primaryArrival?.arrival.originCode}
               {" → "}
               {primaryArrival?.arrival.destinationName ?? primaryArrival?.arrival.destinationCode}
@@ -268,7 +274,10 @@ const BusServiceRow = memo(({ service, changedFields }: BusServiceRowProps) => {
           )}
         </div>
         {hasChanges && (
-          <div className="ml-auto flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-0.5 shrink-0">
+          <div
+            className="flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 dark:bg-green-900/30 sm:ml-auto"
+            data-testid={`service-updated-${service.serviceNo}`}
+          >
             <div className="h-1.5 w-1.5 bg-green-500 rounded-full animate-pulse" />
             <span className="text-[10px] text-green-700 dark:text-green-400 font-medium">
               Updated
