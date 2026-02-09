@@ -3,7 +3,7 @@ import { userEvent } from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { FavoriteToggleButton } from "./FavoriteToggleButton";
 import useFavoritesStore from "../stores/useFavoritesStore";
-import * as favoritesDb from "@/lib/storage/favorites-db";
+import * as busStopsDb from "@/lib/storage/bus-stops-db";
 
 describe("FavoriteToggleButton", () => {
   beforeEach(() => {
@@ -41,8 +41,8 @@ describe("FavoriteToggleButton", () => {
 
   it("should toggle favorite on click", async () => {
     const user = userEvent.setup();
-    const mockAddFavorite = vi.spyOn(favoritesDb, "addFavorite").mockResolvedValue();
-    vi.spyOn(favoritesDb, "getAllFavorites").mockResolvedValue(["01012"]);
+    const mockAddFavorite = vi.spyOn(busStopsDb, "addFavorite").mockResolvedValue();
+    vi.spyOn(busStopsDb, "getAllFavorites").mockResolvedValue(["01012"]);
 
     useFavoritesStore.setState({ favorites: [] });
 

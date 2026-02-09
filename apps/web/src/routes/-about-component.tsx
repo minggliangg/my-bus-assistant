@@ -14,7 +14,7 @@ export function About() {
   return (
     <div className="space-y-6">
       <header className="flex items-center gap-4">
-        <Link to="/">
+        <Link to="/" search={{ busStop: undefined }}>
           <Button variant="ghost" size="icon" title="Back">
             <ChevronLeft className="h-5 w-5" />
           </Button>

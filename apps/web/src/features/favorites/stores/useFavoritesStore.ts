@@ -4,7 +4,7 @@ import {
   removeFavorite,
   getAllFavorites,
   clearAllFavorites,
-} from "@/lib/storage/favorites-db";
+} from "@/lib/storage/bus-stops-db";
 
 interface FavoritesStore {
   favorites: string[];

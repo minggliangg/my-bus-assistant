@@ -20,6 +20,7 @@ import {
   Loader2,
   MapPin,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { memo, useEffect, useState, type ReactNode } from "react";
 import { useShallow } from "zustand/react/shallow";
 import {
@@ -173,6 +174,7 @@ export const BusStopArrivalCard = ({
               key={service.serviceNo}
               service={service}
               changedFields={changedFields}
+              busStopCode={busStop.busStopCode}
             />
           ))
         )}
@@ -202,6 +204,7 @@ export const BusStopArrivalCard = ({
 type BusServiceRowProps = {
   service: BusService;
   changedFields: ChangedField[];
+  busStopCode: string;
 };
 
 type ArrivalEntry = {
@@ -257,7 +260,7 @@ const ArrivalRow = ({
   );
 };
 
-const BusServiceRow = memo(({ service, changedFields }: BusServiceRowProps) => {
+const BusServiceRow = memo(({ service, changedFields, busStopCode }: BusServiceRowProps) => {
   const arrivalCandidates: ArrivalEntry[] = [service.nextBus, service.nextBus2, service.nextBus3]
     .map((arrival, index) => (arrival ? { arrival, index } : null))
     .filter((entry): entry is ArrivalEntry => Boolean(entry));
@@ -281,14 +284,17 @@ const BusServiceRow = memo(({ service, changedFields }: BusServiceRowProps) => {
         className="mb-2 flex flex-wrap items-start gap-2.5"
         data-testid={`service-header-${service.serviceNo}`}
       >
-        <div
+        <Link
+          to="/service/$serviceNo"
+          params={{ serviceNo: service.serviceNo }}
+          search={{ fromStop: busStopCode }}
           className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform hover:scale-110 hover:ring-2 hover:ring-primary/30",
             getOperatorBadgeColors(service.operator),
           )}
         >
           <span className="text-sm font-bold">{service.serviceNo}</span>
-        </div>
+        </Link>
         <div className="flex min-w-0 flex-1 flex-col">
           <span className="text-xs text-muted-foreground truncate">
             {getOperatorFullName(service.operator)}

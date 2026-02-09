@@ -5,7 +5,6 @@ import useThemeStore from "../features/theme/stores/useThemeStore";
 import useBusStopsStore from "../features/search-bar/stores/useBusStopsStore";
 import useFavoritesStore from "../features/favorites/stores/useFavoritesStore";
 import { routeTree } from "../routeTree.gen";
-import * as favoritesDb from "@/lib/storage/favorites-db";
 import * as busStopsDb from "@/lib/storage/bus-stops-db";
 import "fake-indexeddb/auto";
 
@@ -54,7 +53,7 @@ describe("Root Route", () => {
 
       vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue(mockStops);
       vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(Date.now());
-      vi.spyOn(favoritesDb, "getAllFavorites").mockResolvedValue([]);
+      vi.spyOn(busStopsDb, "getAllFavorites").mockResolvedValue([]);
 
       const history = createMemoryHistory({ initialEntries: ["/"] });
       const router = createRouter({ routeTree, history });
@@ -71,7 +70,7 @@ describe("Root Route", () => {
 
       vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue([]);
       vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(Date.now());
-      vi.spyOn(favoritesDb, "getAllFavorites").mockResolvedValue(mockFavorites);
+      vi.spyOn(busStopsDb, "getAllFavorites").mockResolvedValue(mockFavorites);
 
       const history = createMemoryHistory({ initialEntries: ["/"] });
       const router = createRouter({ routeTree, history });
@@ -79,14 +78,14 @@ describe("Root Route", () => {
       render(<RouterProvider router={router} />);
 
       await waitFor(() => {
-        expect(favoritesDb.getAllFavorites).toHaveBeenCalled();
+        expect(busStopsDb.getAllFavorites).toHaveBeenCalled();
       });
     });
 
     it("should call initializeTheme on mount", async () => {
       vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue([]);
       vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(Date.now());
-      vi.spyOn(favoritesDb, "getAllFavorites").mockResolvedValue([]);
+      vi.spyOn(busStopsDb, "getAllFavorites").mockResolvedValue([]);
 
       const initializeThemeSpy = vi.spyOn(useThemeStore.getState(), "initializeTheme");
 
@@ -105,7 +104,7 @@ describe("Root Route", () => {
 
       vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue([]);
       vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(Date.now());
-      vi.spyOn(favoritesDb, "getAllFavorites").mockResolvedValue([]);
+      vi.spyOn(busStopsDb, "getAllFavorites").mockResolvedValue([]);
 
       const history = createMemoryHistory({ initialEntries: ["/"] });
       const router = createRouter({ routeTree, history });
@@ -135,7 +134,7 @@ describe("Root Route", () => {
 
       vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue(mockStops);
       vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(Date.now());
-      vi.spyOn(favoritesDb, "getAllFavorites").mockResolvedValue([]);
+      vi.spyOn(busStopsDb, "getAllFavorites").mockResolvedValue([]);
 
       const history = createMemoryHistory({ initialEntries: ["/about"] });
       const router = createRouter({ routeTree, history });
@@ -148,7 +147,7 @@ describe("Root Route", () => {
 
       await waitFor(() => {
         expect(busStopsDb.getAllBusStops).toHaveBeenCalled();
-        expect(favoritesDb.getAllFavorites).toHaveBeenCalled();
+        expect(busStopsDb.getAllFavorites).toHaveBeenCalled();
       });
     });
 
@@ -165,7 +164,7 @@ describe("Root Route", () => {
 
       vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue(mockStops);
       vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(Date.now());
-      vi.spyOn(favoritesDb, "getAllFavorites").mockResolvedValue([]);
+      vi.spyOn(busStopsDb, "getAllFavorites").mockResolvedValue([]);
 
       const history = createMemoryHistory({ initialEntries: ["/"] });
       const router = createRouter({ routeTree, history });
@@ -178,7 +177,7 @@ describe("Root Route", () => {
 
       await waitFor(() => {
         expect(busStopsDb.getAllBusStops).toHaveBeenCalled();
-        expect(favoritesDb.getAllFavorites).toHaveBeenCalled();
+        expect(busStopsDb.getAllFavorites).toHaveBeenCalled();
       });
     });
 
@@ -187,7 +186,7 @@ describe("Root Route", () => {
 
       vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue([]);
       vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(Date.now());
-      vi.spyOn(favoritesDb, "getAllFavorites").mockResolvedValue([]);
+      vi.spyOn(busStopsDb, "getAllFavorites").mockResolvedValue([]);
 
       const history = createMemoryHistory({ initialEntries: ["/about"] });
       const router = createRouter({ routeTree, history });
@@ -220,7 +219,7 @@ describe("Root Route", () => {
 
       vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue([]);
       vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(Date.now());
-      vi.spyOn(favoritesDb, "getAllFavorites").mockResolvedValue([]);
+      vi.spyOn(busStopsDb, "getAllFavorites").mockResolvedValue([]);
 
       const history = createMemoryHistory({ initialEntries: ["/"] });
       const router = createRouter({ routeTree, history });
@@ -241,7 +240,7 @@ describe("Root Route", () => {
 
       vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue([]);
       vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(Date.now());
-      vi.spyOn(favoritesDb, "getAllFavorites").mockResolvedValue([]);
+      vi.spyOn(busStopsDb, "getAllFavorites").mockResolvedValue([]);
 
       const history = createMemoryHistory({ initialEntries: ["/"] });
       const router = createRouter({ routeTree, history });
@@ -265,7 +264,7 @@ describe("Root Route", () => {
     it("should render app when loadFavorites has error", async () => {
       vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue([]);
       vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(Date.now());
-      vi.spyOn(favoritesDb, "getAllFavorites").mockRejectedValue(new Error("DB Error"));
+      vi.spyOn(busStopsDb, "getAllFavorites").mockRejectedValue(new Error("DB Error"));
 
       const history = createMemoryHistory({ initialEntries: ["/"] });
       const router = createRouter({ routeTree, history });

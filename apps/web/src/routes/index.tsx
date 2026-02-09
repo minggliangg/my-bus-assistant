@@ -11,22 +11,24 @@ import {
 import { BusStopSearchComboBox } from "@/features/search-bar";
 import { useBusStopsStore } from "@/features/search-bar/stores";
 import { ThemeToggle } from "@/features/theme";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 export const Route = createFileRoute("/")({
   component: Home,
+  validateSearch: (search: Record<string, unknown>) => ({
+    busStop: (search.busStop as string) || undefined,
+  }),
 });
 
 function Home() {
-  const [selectedBusStopCode, setSelectedBusStopCode] = useState<
-    string | undefined
-  >(undefined);
+  const { busStop } = Route.useSearch();
+  const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleBusStopSelect = (code: string | undefined) => {
-    setSelectedBusStopCode(code);
+    navigate({ to: "/", search: { busStop: code }, replace: true });
   };
 
   const handleNearbyDialogOpen = (open: boolean) => {
@@ -83,19 +85,19 @@ function Home() {
         <div className="flex-1 min-w-0">
           <BusStopSearchComboBox
             onBusStopSelect={handleBusStopSelect}
-            defaultValue={selectedBusStopCode}
+            defaultValue={busStop}
           />
         </div>
-        <AutoRefreshControl busStopCode={selectedBusStopCode} />
+        <AutoRefreshControl busStopCode={busStop} />
         <NearbyBusStopsButton onOpenChange={handleNearbyDialogOpen} />
       </div>
 
       <FavoriteBusStops
-        selectedBusStopCode={selectedBusStopCode}
+        selectedBusStopCode={busStop}
         onBusStopSelect={handleBusStopSelect}
       />
 
-      <BusStopArrivalCard busStopCode={selectedBusStopCode} />
+      <BusStopArrivalCard busStopCode={busStop} />
 
       <NearestBusStopsDialog
         open={dialogOpen}

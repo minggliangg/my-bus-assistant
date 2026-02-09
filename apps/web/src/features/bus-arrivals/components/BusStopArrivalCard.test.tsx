@@ -4,6 +4,12 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import useBusStore from "../stores/useBusStopStore";
 import { BusStopArrivalCard } from "./BusStopArrivalCard";
 
+// Mock TanStack Router's Link component to avoid needing RouterProvider in tests
+vi.mock("@tanstack/react-router", () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Link: ({ children, search: _search, params: _params, ...props }: any) => <a {...props}>{children}</a>,
+}));
+
 // Helper to render with providers
 const renderWithProviders = (ui: ReactElement) => {
   return render(ui);

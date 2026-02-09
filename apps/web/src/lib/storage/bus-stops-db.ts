@@ -1,5 +1,11 @@
-import { openDB, type DBSchema, type IDBPDatabase } from "idb";
+import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { BusStopSearchModel } from "@/features/search-bar/models/bus-stops-model";
+
+interface BusRouteCacheEntry {
+  serviceNo: string;
+  data: string;
+  timestamp: number;
+}
 
 interface BusStopsDB extends DBSchema {
   busStops: {
@@ -25,43 +31,73 @@ interface BusStopsDB extends DBSchema {
       "by-timestamp": number;
     };
   };
+  busRoutes: {
+    key: string;
+    value: BusRouteCacheEntry;
+  };
 }
 
 const DB_NAME = "my-bus-assistant";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const BUS_STOPS_STORE = "busStops";
 const METADATA_STORE = "metadata";
 const LAST_UPDATE_KEY = "bus-stops-last-update";
 
 let db: IDBPDatabase<BusStopsDB> | null = null;
 
+const createDatabase = (database: IDBPDatabase<BusStopsDB>) => {
+  if (!database.objectStoreNames.contains(BUS_STOPS_STORE)) {
+    const busStopsStore = database.createObjectStore(BUS_STOPS_STORE, {
+      keyPath: "busStopCode",
+    });
+    busStopsStore.createIndex("by-description", "description");
+    busStopsStore.createIndex("by-road-name", "roadName");
+  }
+
+  if (!database.objectStoreNames.contains(METADATA_STORE)) {
+    database.createObjectStore(METADATA_STORE);
+  }
+
+  if (!database.objectStoreNames.contains("favorites")) {
+    const favoritesStore = database.createObjectStore("favorites", {
+      keyPath: "busStopCode",
+    });
+    favoritesStore.createIndex("by-timestamp", "timestamp");
+  }
+
+  if (!database.objectStoreNames.contains("busRoutes")) {
+    database.createObjectStore("busRoutes", {
+      keyPath: "serviceNo",
+    });
+  }
+};
+
 const openDatabase = async (): Promise<IDBPDatabase<BusStopsDB>> => {
   if (db) {
     return db;
   }
 
-  db = await openDB<BusStopsDB>(DB_NAME, DB_VERSION, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains(BUS_STOPS_STORE)) {
-        const busStopsStore = db.createObjectStore(BUS_STOPS_STORE, {
-          keyPath: "busStopCode",
-        });
-        busStopsStore.createIndex("by-description", "description");
-        busStopsStore.createIndex("by-road-name", "roadName");
-      }
-
-      if (!db.objectStoreNames.contains(METADATA_STORE)) {
-        db.createObjectStore(METADATA_STORE);
-      }
-
-      if (!db.objectStoreNames.contains("favorites")) {
-        const favoritesStore = db.createObjectStore("favorites", {
-          keyPath: "busStopCode",
-        });
-        favoritesStore.createIndex("by-timestamp", "timestamp");
-      }
-    },
-  });
+  try {
+    db = await openDB<BusStopsDB>(DB_NAME, DB_VERSION, {
+      upgrade(database) {
+        createDatabase(database);
+      },
+      blocked() {
+        db?.close();
+        db = null;
+      },
+    });
+  } catch (error) {
+    // If upgrade fails (e.g. corrupted DB), delete and recreate from scratch
+    console.warn("IndexedDB open failed, deleting and recreating:", error);
+    db = null;
+    await deleteDB(DB_NAME);
+    db = await openDB<BusStopsDB>(DB_NAME, DB_VERSION, {
+      upgrade(database) {
+        createDatabase(database);
+      },
+    });
+  }
 
   return db;
 };
@@ -123,6 +159,16 @@ const searchByDescription = async (query: string): Promise<BusStopSearchModel[]>
   );
 };
 
+const getCachedBusRoute = async (serviceNo: string): Promise<BusRouteCacheEntry | undefined> => {
+  const database = await openDatabase();
+  return database.get("busRoutes", serviceNo);
+};
+
+const saveBusRoute = async (serviceNo: string, data: string, timestamp: number): Promise<void> => {
+  const database = await openDatabase();
+  await database.put("busRoutes", { serviceNo, data, timestamp });
+};
+
 const clearAll = async (): Promise<void> => {
   const database = await openDatabase();
   const tx = database.transaction([BUS_STOPS_STORE, METADATA_STORE], "readwrite");
@@ -135,6 +181,34 @@ const clearAll = async (): Promise<void> => {
   await tx.done;
 };
 
+const addFavorite = async (busStopCode: string): Promise<void> => {
+  const database = await openDatabase();
+  const timestamp = Date.now();
+  await database.put("favorites", {
+    busStopCode,
+    timestamp,
+    order: 0,
+  });
+};
+
+const removeFavorite = async (busStopCode: string): Promise<void> => {
+  const database = await openDatabase();
+  await database.delete("favorites", busStopCode);
+};
+
+const getAllFavorites = async (): Promise<string[]> => {
+  const database = await openDatabase();
+  const allFavorites = await database.getAll("favorites");
+  return allFavorites
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .map((fav) => fav.busStopCode);
+};
+
+const clearAllFavorites = async (): Promise<void> => {
+  const database = await openDatabase();
+  await database.clear("favorites");
+};
+
 export {
   openDatabase,
   getAllBusStops,
@@ -145,5 +219,11 @@ export {
   setLastUpdate,
   getBusStopByCode,
   searchByDescription,
+  getCachedBusRoute,
+  saveBusRoute,
   clearAll,
+  addFavorite,
+  removeFavorite,
+  getAllFavorites,
+  clearAllFavorites,
 };

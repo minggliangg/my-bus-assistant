@@ -203,14 +203,34 @@ describe("API Server", () => {
   });
 
   describe("GET /api/ltaodataservice/BusRoutes", () => {
-    it("returns bus routes from database", async () => {
+    it("returns 400 when ServiceNo is missing", async () => {
       const res = await app.request("/api/ltaodataservice/BusRoutes");
+      expect(res.status).toBe(400);
+
+      const json = (await res.json()) as any;
+      expect(json.error).toBe("ServiceNo query parameter is required");
+    });
+
+    it("returns routes for a specific ServiceNo", async () => {
+      const res = await app.request(
+        "/api/ltaodataservice/BusRoutes?ServiceNo=10",
+      );
       expect(res.status).toBe(200);
 
       const json = (await res.json()) as any;
       expect(json).toHaveProperty("value");
       expect(Array.isArray(json.value)).toBe(true);
       expect(json.value).toEqual(mockBusRoutesData);
+    });
+
+    it("returns empty array for unknown ServiceNo", async () => {
+      const res = await app.request(
+        "/api/ltaodataservice/BusRoutes?ServiceNo=999",
+      );
+      expect(res.status).toBe(200);
+
+      const json = (await res.json()) as any;
+      expect(json.value).toEqual([]);
     });
   });
 

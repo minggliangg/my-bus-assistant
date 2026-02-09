@@ -1,16 +1,12 @@
 import type { BusRouteDTO } from "@my-bus-assistant/shared";
 import { getDb } from "../client";
 
-export const getAllBusRoutes = (): BusRouteDTO[] => {
-  return getBusRoutesPage(0, getBusRoutesCount());
-};
-
-export const getBusRoutesPage = (skip: number, top: number): BusRouteDTO[] => {
+export const getBusRoutesByServiceNo = (serviceNo: string): BusRouteDTO[] => {
   const rows = getDb()
     .query(
-      "SELECT * FROM bus_routes ORDER BY service_no, direction, stop_sequence LIMIT ? OFFSET ?",
+      "SELECT * FROM bus_routes WHERE service_no = ? ORDER BY direction, stop_sequence",
     )
-    .all(top, skip) as Array<{
+    .all(serviceNo) as Array<{
     service_no: string;
     operator: string;
     direction: number;
