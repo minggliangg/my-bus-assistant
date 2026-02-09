@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useFavoritesStore } from "@/features/favorites";
 import { useBusStopsStore } from "@/features/search-bar/stores";
 import { useThemeStore } from "@/features/theme";
+import { UpdateBanner } from "@/features/service-worker";
 
 function RootComponent() {
   useEffect(() => {
@@ -20,6 +21,7 @@ function RootComponent() {
         <Outlet />
       </div>
       {process.env.NODE_ENV === "development" && <TanStackRouterDevtools />}
+      <UpdateBanner />
     </div>
   );
 }

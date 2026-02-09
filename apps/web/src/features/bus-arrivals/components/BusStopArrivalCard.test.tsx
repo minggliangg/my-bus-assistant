@@ -7,7 +7,7 @@ import { BusStopArrivalCard } from "./BusStopArrivalCard";
 // Mock TanStack Router's Link component to avoid needing RouterProvider in tests
 vi.mock("@tanstack/react-router", () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Link: ({ children, search: _search, params: _params, ...props }: any) => <a {...props}>{children}</a>,
+  Link: ({ children, ...props }: any) => <a {...props}>{children}</a>,
 }));
 
 // Helper to render with providers
