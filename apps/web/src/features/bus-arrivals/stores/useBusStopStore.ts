@@ -25,7 +25,7 @@ interface BusStopStore {
   isFetching: boolean;
   changedFields: ChangedField[]; // Track recently changed fields
   isStale: boolean; // Indicates if displayed data is from cache
-  fetchBusArrivals: (busStopCode: string) => Promise<void>;
+  fetchBusArrivals: (busStopCode: string, options?: { force?: boolean }) => Promise<void>;
   toggleAutoRefresh: () => void;
   clearChangedFields: () => void; // Cleanup old changes
   reset: () => void; // Reset store to initial state (for testing)
@@ -151,7 +151,7 @@ const useBusStore = create<BusStopStore>((set, get) => {
     changedFields: [],
     isStale: false,
 
-    fetchBusArrivals: async (busStopCode: string) => {
+    fetchBusArrivals: async (busStopCode: string, options?: { force?: boolean }) => {
       const THROTTLE_INTERVAL_MS = parseInt(
         import.meta.env.VITE_THROTTLE_INTERVAL_MS || "30000",
         10,
@@ -191,30 +191,32 @@ const useBusStore = create<BusStopStore>((set, get) => {
         });
       }
 
-      // [4] Check throttle for API fetch
-      try {
-        const lastUpdateRaw = localStorage.getItem(storageKey);
-        const lastUpdate = lastUpdateRaw ? parseInt(lastUpdateRaw, 10) : null;
-        const lastAttempt = currentState.lastAttemptTimestamp;
+      // [4] Check throttle for API fetch (skip if force refresh)
+      if (!options?.force) {
+        try {
+          const lastUpdateRaw = localStorage.getItem(storageKey);
+          const lastUpdate = lastUpdateRaw ? parseInt(lastUpdateRaw, 10) : null;
+          const lastAttempt = currentState.lastAttemptTimestamp;
 
-        if (lastUpdate && now - lastUpdate < THROTTLE_INTERVAL_MS) {
-          const failedAttemptAfterLastUpdate =
-            lastAttempt !== null && lastAttempt > lastUpdate;
-          const retryWindowElapsed =
-            lastAttempt !== null && now - lastAttempt > 5000;
+          if (lastUpdate && now - lastUpdate < THROTTLE_INTERVAL_MS) {
+            const failedAttemptAfterLastUpdate =
+              lastAttempt !== null && lastAttempt > lastUpdate;
+            const retryWindowElapsed =
+              lastAttempt !== null && now - lastAttempt > 5000;
 
-          if (!(failedAttemptAfterLastUpdate && retryWindowElapsed)) {
-            console.log("Fetch throttled: less than 30s since last update");
-            // Keep cached data visible with stale indicator
-            set({
-              loading: false,
-              isStale: cachedBusStop !== null,
-            });
-            return;
+            if (!(failedAttemptAfterLastUpdate && retryWindowElapsed)) {
+              console.log("Fetch throttled: less than 30s since last update");
+              // Keep cached data visible with stale indicator
+              set({
+                loading: false,
+                isStale: cachedBusStop !== null,
+              });
+              return;
+            }
           }
+        } catch (error) {
+          console.warn("Failed to check throttle:", error);
         }
-      } catch (error) {
-        console.warn("Failed to check throttle:", error);
       }
 
       // [5] Proceed with API fetch (not throttled)

@@ -20,7 +20,7 @@ import {
   Loader2,
   MapPin,
 } from "lucide-react";
-import { memo, useEffect, type ReactNode } from "react";
+import { memo, useEffect, useState, type ReactNode } from "react";
 import { useShallow } from "zustand/react/shallow";
 import {
   formatArrivalTime,
@@ -35,10 +35,19 @@ interface BusStopArrivalCardProps {
   busStopCode: string | undefined;
 }
 
+const formatRelativeTime = (timestamp: number, now: number = Date.now()): string => {
+  const seconds = Math.floor((now - timestamp) / 1000);
+  if (seconds < 5) return "just now";
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  return `${Math.floor(minutes / 60)}h ago`;
+};
+
 export const BusStopArrivalCard = ({
   busStopCode,
 }: BusStopArrivalCardProps) => {
-  const { busStop, loading, error, changedFields, isStale, isFetching } =
+  const { busStop, loading, error, changedFields, isStale, isFetching, lastUpdateTimestamp } =
     useBusStore(
       useShallow((state) => ({
         busStop: state.busStop,
@@ -47,9 +56,22 @@ export const BusStopArrivalCard = ({
         changedFields: state.changedFields,
         isStale: state.isStale,
         isFetching: state.isFetching,
+        lastUpdateTimestamp: state.lastUpdateTimestamp,
       })),
     );
   const fetchBusArrivals = useBusStore((state) => state.fetchBusArrivals);
+
+  const [currentTime, setCurrentTime] = useState(Date.now);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const relativeTime = lastUpdateTimestamp ? formatRelativeTime(lastUpdateTimestamp, currentTime) : null;
 
   useEffect(() => {
     if (busStopCode) {
@@ -156,11 +178,20 @@ export const BusStopArrivalCard = ({
         )}
       </CardContent>
 
-      {isStale && !isFetching && (
+      {(relativeTime || (isStale && !isFetching)) && (
         <CardFooter className="pt-0">
-          <div className="flex w-full items-center justify-end gap-2 border-t border-dashed pt-4 text-amber-600 dark:text-amber-400">
-            <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-            <span className="text-xs font-medium">Cached data shown</span>
+          <div className="flex w-full items-center justify-between border-t border-dashed pt-4">
+            {relativeTime && (
+              <span className="text-xs text-muted-foreground">
+                Updated {relativeTime}
+              </span>
+            )}
+            {isStale && !isFetching && (
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 ml-auto">
+                <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                <span className="text-xs font-medium">Cached data shown</span>
+              </div>
+            )}
           </div>
         </CardFooter>
       )}
