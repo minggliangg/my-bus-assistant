@@ -40,3 +40,6 @@ learnings.md
 
 # Turborepo
 .turbo
+
+# SQLite database
+apps/api/data/
