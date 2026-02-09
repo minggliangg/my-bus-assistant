@@ -4,6 +4,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Link } from "@tanstack/react-router";
 import { Clock, MapPin } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { BusRouteDirection } from "../models/bus-route-model";
@@ -24,7 +25,7 @@ export const ServiceRouteCard = ({ direction, highlightedStopCode }: ServiceRout
   const stops = direction.stops;
   const firstStop = stops[0];
   const lastStop = stops[stops.length - 1];
-  const highlightRef = useRef<HTMLDivElement>(null);
+  const highlightRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     if (highlightedStopCode && highlightRef.current) {
@@ -65,12 +66,14 @@ export const ServiceRouteCard = ({ direction, highlightedStopCode }: ServiceRout
             const isHighlighted = highlightedStopCode === stop.busStopCode;
 
             return (
-              <div
+              <Link
                 key={`${stop.busStopCode}-${stop.stopSequence}`}
                 ref={isHighlighted ? highlightRef : undefined}
+                to="/"
+                search={{ busStop: stop.busStopCode }}
                 className={cn(
-                  "relative flex gap-3",
-                  isHighlighted && "bg-primary/5 rounded-lg -mx-1 px-1",
+                  "relative flex gap-3 no-underline text-inherit hover:bg-accent/50 rounded-lg transition-colors -mx-1 px-1",
+                  isHighlighted && "bg-primary/5",
                 )}
               >
                 {/* Timeline */}
@@ -133,7 +136,7 @@ export const ServiceRouteCard = ({ direction, highlightedStopCode }: ServiceRout
                     </div>
                   )}
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

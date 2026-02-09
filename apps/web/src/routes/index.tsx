@@ -122,6 +122,13 @@ function Home() {
             About & Attribution
           </Link>
           <span className="text-border">•</span>
+          <Link
+            to="/settings"
+            className="hover:text-primary transition-colors hover:underline underline-offset-4"
+          >
+            Settings
+          </Link>
+          <span className="text-border">•</span>
           <a
             href="https://minggliangg.com"
             target="_blank"

@@ -46,7 +46,7 @@ const useBusStopsStore = create<BusStopsStore>((set, get) => {
       }
 
       const REFRESH_DAYS = parseInt(
-        import.meta.env.VITE_BUS_STOPS_REFRESH_DAYS || "7",
+        import.meta.env.VITE_BUS_STOPS_REFRESH_DAYS || "30",
         10,
       );
       const now = Date.now();

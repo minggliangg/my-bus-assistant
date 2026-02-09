@@ -209,6 +209,27 @@ const clearAllFavorites = async (): Promise<void> => {
   await database.clear("favorites");
 };
 
+const clearAllCaches = async (): Promise<void> => {
+  const database = await openDatabase();
+  const tx = database.transaction([BUS_STOPS_STORE, METADATA_STORE, "busRoutes"], "readwrite");
+  await Promise.all([
+    tx.objectStore(BUS_STOPS_STORE).clear(),
+    tx.objectStore(METADATA_STORE).delete(LAST_UPDATE_KEY),
+    tx.objectStore("busRoutes").clear(),
+  ]);
+  await tx.done;
+};
+
+const getBusStopsCount = async (): Promise<number> => {
+  const database = await openDatabase();
+  return database.count(BUS_STOPS_STORE);
+};
+
+const getBusRoutesCount = async (): Promise<number> => {
+  const database = await openDatabase();
+  return database.count("busRoutes");
+};
+
 export {
   openDatabase,
   getAllBusStops,
@@ -226,4 +247,7 @@ export {
   removeFavorite,
   getAllFavorites,
   clearAllFavorites,
+  clearAllCaches,
+  getBusStopsCount,
+  getBusRoutesCount,
 };
