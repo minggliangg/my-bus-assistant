@@ -63,16 +63,13 @@ const Home = () => {
   return (
     <div className="space-y-6">
       <header>
-        <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-start">
-          <div className="space-y-1.5 text-center sm:col-start-2">
+        <div className="grid grid-cols-[1fr_auto] items-start gap-x-3 gap-y-2">
+          <div className="min-w-0 space-y-1.5 text-left sm:text-center">
             <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               My Bus Assistant
             </h1>
-            <p className="text-sm text-muted-foreground">
-              Real-time bus arrival information at your fingertips
-            </p>
           </div>
-          <div className="flex items-center justify-center gap-2 sm:col-start-3 sm:row-start-1 sm:justify-self-end">
+          <div className="flex items-center gap-2 justify-self-end">
             <Button
               type="button"
               variant="outline"
@@ -85,6 +82,9 @@ const Home = () => {
             </Button>
             <ThemeToggle />
           </div>
+          <p className="col-span-2 text-left text-sm text-muted-foreground sm:text-center">
+            Real-time bus arrival information at your fingertips
+          </p>
         </div>
       </header>
 
