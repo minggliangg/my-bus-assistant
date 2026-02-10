@@ -124,15 +124,18 @@ Each feature exports its public API through an `index.ts` barrel file.
 
 This ensures API contracts don't leak into business logic.
 
-#### Storage Layer
+#### Storage & Cache Layer
 
 - **Location**: `apps/web/src/lib/storage/`
-- **Technology**: IndexedDB via `idb` library
+- **Technology**: SQLite (Bun native API) and IndexedDB (browser-native) via `idb` library
 - **Stores**:
-  - `busStops`: Cached bus stop data
+  - `busStops`: Cached bus stop data (refreshes every 7 days, configurable)
   - `metadata`: Last update timestamps
-  - `favorites`: User's favorite bus stops
-- **Pattern**: Stale-while-revalidate (stores check cache validity and refetch if stale)
+  - `favorites`: User's favorite bus stops (persisted with timestamps)
+- **Refresh Strategy**:
+  - Bus stops: 7 days (configurable via `VITE_BUS_STOPS_REFRESH_DAYS`)
+  - Bus arrivals: 30 seconds (configurable via `VITE_THROTTLE_INTERVAL_MS`)
+  - Pattern: Stale-while-revalidate (serves cached data immediately, fetches fresh data in background)
 
 #### UI Components
 
@@ -140,6 +143,12 @@ This ensures API contracts don't leak into business logic.
 - **Styling utilities**: `clsx` + `tailwind-merge` in `apps/web/src/lib/utils.ts`
 - **Variants**: `class-variance-authority` for component variants
 - **Icons**: `lucide-react`
+
+#### Routing
+
+- **Framework**: TanStack Router with file-based routing
+- **Configuration**: `apps/web/src/routes/` (file-based routes auto-generated)
+- **Type Safety**: Full TypeScript support for route definitions and parameters
 
 #### Tailwind CSS v4 Syntax
 
@@ -149,6 +158,18 @@ Tailwind CSS v4 includes built-in linting that flags outdated selector syntax. W
 **New syntax (v4)**: `**:[[cmdk-group-heading]]:font-medium`
 
 The `**:` prefix replaces the older `[&_...]` pattern for better readability and consistency. If you see linting warnings about this, update the selectors to use the new syntax.
+
+#### Theming & Dark Mode
+
+- **Implementation**: Tailwind CSS with system-aware theme detection
+- **Storage**: User theme preference persisted in IndexedDB
+- **Toggle**: Manual theme toggle available in settings
+
+#### Settings & Configuration
+
+- **Location**: `apps/web/src/features/settings/`
+- **Functionality**: Cache management, feature toggles, and user preferences
+- **Storage**: Persisted to IndexedDB for user preferences
 
 #### Testing Setup
 
@@ -213,6 +234,22 @@ PORT=3001  # optional
 - Checks cache freshness based on timestamp
 - Refetches in background if stale
 - Updates UI when fresh data arrives
+
+## Environment Variables
+
+### Backend (`apps/api/.env`)
+
+```bash
+LTA_DATAMALL_API_KEY=your_api_key_here  # Required: LTA DataMall API key
+PORT=3001                                # Optional: API server port (default: 3001)
+```
+
+### Frontend (`apps/web/.env` - optional)
+
+```bash
+VITE_BUS_STOPS_REFRESH_DAYS=7            # Days before refreshing bus stops cache (default: 7)
+VITE_THROTTLE_INTERVAL_MS=30000          # API throttle interval in ms (default: 30000)
+```
 
 ## Development Workflow
 

@@ -93,6 +93,7 @@ export const BusStopSearchComboBox = ({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
+            data-tour-id="search-bus-stop"
             variant="outline"
             role="combobox"
             aria-expanded={open}

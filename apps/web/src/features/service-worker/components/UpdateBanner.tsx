@@ -4,15 +4,13 @@ import useServiceWorkerStore from '../stores/useServiceWorkerStore';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-function UpdateBanner() {
+const UpdateBanner = () => {
   const { isUpdateAvailable, activateUpdate, setUpdateAvailable } = useServiceWorkerStore();
   const [dismissed, setDismissed] = useState(false);
 
   const isVisible = isUpdateAvailable && !dismissed;
 
-  const handleRefresh = () => {
-    activateUpdate();
-  };
+  const handleRefresh = () => activateUpdate();
 
   const handleDismiss = () => {
     setDismissed(true);

@@ -2,6 +2,7 @@ import {
   AutoRefreshControl,
   BusStopArrivalCard,
 } from "@/features/bus-arrivals/components";
+import { Button } from "@/components/ui/button";
 import { FavoriteBusStops } from "@/features/favorites";
 import {
   NearbyBusStopsButton,
@@ -11,21 +12,17 @@ import {
 import { BusStopSearchComboBox } from "@/features/search-bar";
 import { useBusStopsStore } from "@/features/search-bar/stores";
 import { ThemeToggle } from "@/features/theme";
+import { useTutorialStore } from "@/features/tutorial";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { CircleHelp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 
-export const Route = createFileRoute("/")({
-  component: Home,
-  validateSearch: (search: Record<string, unknown>) => ({
-    busStop: (search.busStop as string) || undefined,
-  }),
-});
-
-function Home() {
+const Home = () => {
   const { busStop } = Route.useSearch();
   const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const startTutorial = useTutorialStore((state) => state.startTutorial);
 
   const handleBusStopSelect = (code: string | undefined) => {
     navigate({ to: "/", search: { busStop: code }, replace: true });
@@ -77,7 +74,19 @@ function Home() {
           </div>
         </div>
         <div className="absolute right-0 top-0">
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label="Start tutorial"
+              title="Tutorial"
+              onClick={() => startTutorial({ force: true })}
+            >
+              <CircleHelp className="h-4 w-4" />
+            </Button>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
@@ -124,6 +133,7 @@ function Home() {
           <span className="text-border">•</span>
           <Link
             to="/settings"
+            data-tour-id="settings-link"
             className="hover:text-primary transition-colors hover:underline underline-offset-4"
           >
             Settings
@@ -141,4 +151,11 @@ function Home() {
       </footer>
     </div>
   );
-}
+};
+
+export const Route = createFileRoute("/")({
+  component: Home,
+  validateSearch: (search: Record<string, unknown>) => ({
+    busStop: (search.busStop as string) || undefined,
+  }),
+});

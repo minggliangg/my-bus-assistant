@@ -68,6 +68,7 @@ export const AutoRefreshControl = ({
   return (
     <>
       <button
+        data-tour-id="manual-refresh"
         onClick={handleManualRefresh}
         disabled={!canManualRefresh || isFetching || !busStopCode}
         className={cn(
@@ -82,6 +83,7 @@ export const AutoRefreshControl = ({
         />
       </button>
       <button
+        data-tour-id="auto-refresh"
         onClick={toggleAutoRefresh}
         disabled={isFetching || !busStopCode}
         className={cn(

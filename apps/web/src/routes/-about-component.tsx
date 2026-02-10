@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 
-export function About() {
+const About = () => {
   const currentYear = new Date().getFullYear();
   const accessDate = new Date().toLocaleDateString("en-SG", {
     day: "numeric",
@@ -85,4 +85,6 @@ export function About() {
       </div>
     </div>
   );
-}
+};
+
+export default About;

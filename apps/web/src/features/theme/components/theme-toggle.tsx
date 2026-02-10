@@ -27,36 +27,35 @@ export const ThemeToggle = () => {
   const CurrentIcon = effectiveTheme === "dark" ? Moon : Sun;
 
   return (
-    <div className="absolute top-0 right-0">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            aria-label="Toggle theme"
-            className="h-9 w-9"
-          >
-            <CurrentIcon className="h-4 w-4" />
-            <span className="sr-only">Toggle theme</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {themes.map(({ value, label, icon: Icon }) => {
-            const isActive = theme === value;
-            return (
-              <DropdownMenuItem
-                key={value}
-                onClick={() => setTheme(value)}
-                className="cursor-pointer"
-              >
-                <Icon className="mr-2 h-4 w-4" />
-                <span className="flex-1">{label}</span>
-                {isActive && <Check className="ml-2 h-4 w-4" />}
-              </DropdownMenuItem>
-            );
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          data-tour-id="theme-toggle"
+          variant="outline"
+          size="icon"
+          aria-label="Toggle theme"
+          className="h-9 w-9"
+        >
+          <CurrentIcon className="h-4 w-4" />
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {themes.map(({ value, label, icon: Icon }) => {
+          const isActive = theme === value;
+          return (
+            <DropdownMenuItem
+              key={value}
+              onClick={() => setTheme(value)}
+              className="cursor-pointer"
+            >
+              <Icon className="mr-2 h-4 w-4" />
+              <span className="flex-1">{label}</span>
+              {isActive && <Check className="ml-2 h-4 w-4" />}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };

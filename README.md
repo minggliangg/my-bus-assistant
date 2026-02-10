@@ -135,6 +135,7 @@ bun clean:deps   # Remove all node_modules
 - 🔍 **Smart Search**: Search by bus stop code, road name, or description
 - 🔄 **Auto-refresh**: Optional 30-second auto-refresh for live updates
 - 🎨 **Dark Mode**: System-aware theme with manual toggle
+- ⚙️ **Settings**: Manage cache refresh intervals and application preferences
 - 📱 **Responsive Design**: Works seamlessly on desktop and mobile
 
 ### Technical Features
@@ -192,16 +193,24 @@ src/features/<feature-name>/
 └── stores/        # Zustand stores (state + API calls)
 ```
 
+**Current Features**: `bus-arrivals/`, `search-bar/`, `favorites/`, `settings/`
+
 **Data Flow**: DTO → Mapper → Model → Store → Component
 
 This separation ensures API contracts don't leak into business logic and makes the codebase maintainable.
 
+**Routing**: File-based routing via TanStack Router (`src/routes/`) with full TypeScript support and type-safe route parameters.
+
+**Storage**: IndexedDB-backed cache with stale-while-revalidate pattern, managed through the settings page for user control.
+
 ### Caching Strategy
 
-- **Bus stops**: Cached in IndexedDB, refreshes every 7 days (configurable)
-- **Bus arrivals**: Throttled to 30-second intervals, cached in localStorage
+- **Bus stops**: Cached in IndexedDB, refreshes every 7 days (configurable via `VITE_BUS_STOPS_REFRESH_DAYS`)
+- **Bus arrivals**: Throttled to 30-second intervals (configurable via `VITE_THROTTLE_INTERVAL_MS`)
 - **Stale-while-revalidate**: Shows cached data immediately, fetches fresh data in background
 - **Favorites**: Persisted in IndexedDB with timestamp tracking
+- **User Preferences**: Theme and settings cached in IndexedDB
+- **Manageable**: Settings page allows users to clear cache and manage refresh intervals
 
 ### Why These Technologies?
 
@@ -242,6 +251,10 @@ VITE_THROTTLE_INTERVAL_MS=30000         # API throttle interval in ms (default: 
 | `bun clean:cache` | Clear Turborepo cache                       |
 | `bun clean:deps`  | Remove all node_modules directories         |
 
+## Development Notes
+
+For more detailed technical guidance on architecture, command reference, and development workflows, see [CLAUDE.md](./CLAUDE.md).
+
 ## Contributing
 
 This project follows a feature-based architecture. When adding new features:
@@ -251,8 +264,6 @@ This project follows a feature-based architecture. When adding new features:
 3. Export public APIs through an `index.ts` barrel file
 4. Write tests for all new functionality
 5. Update types in `packages/shared/` if they affect the API contract
-
-For more detailed guidance, see [CLAUDE.md](./CLAUDE.md).
 
 ## License
 

@@ -17,6 +17,7 @@ export const NearbyBusStopsButton = ({
 
   return (
     <button
+      data-tour-id="nearby-stops"
       onClick={() => onOpenChange(true)}
       disabled={disabled}
       className={cn(

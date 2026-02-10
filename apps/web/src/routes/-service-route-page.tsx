@@ -1,21 +1,18 @@
-import { ServiceRouteCard, useBusRouteStore } from "@/features/bus-routes";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   getOperatorBadgeColors,
   getOperatorFullName,
 } from "@/features/bus-arrivals/utils";
+import { ServiceRouteCard, useBusRouteStore } from "@/features/bus-routes";
 import { ThemeToggle } from "@/features/theme";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { ArrowLeft, Loader2, Route as RouteIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
 
-export function ServiceRoutePage() {
+export const ServiceRoutePage = () => {
   const { serviceNo } = useParams({ from: "/service/$serviceNo" });
   const { fromStop } = useSearch({ from: "/service/$serviceNo" });
 
@@ -41,14 +38,17 @@ export function ServiceRoutePage() {
     return match?.direction ?? 1;
   }, [fromStop, route]);
 
-  const [activeDirection, setActiveDirection] = useState<number>(initialDirection);
+  const [activeDirection, setActiveDirection] =
+    useState<number>(initialDirection);
 
   // Sync activeDirection when initialDirection changes (e.g. route data loads)
   useEffect(() => {
     setActiveDirection(initialDirection);
   }, [initialDirection]);
 
-  const activeDir = route?.directions.find((d) => d.direction === activeDirection);
+  const activeDir = route?.directions.find(
+    (d) => d.direction === activeDirection,
+  );
   const hasMultipleDirections = route && route.directions.length > 1;
 
   return (
@@ -124,9 +124,10 @@ export function ServiceRoutePage() {
           {route.directions.map((dir) => {
             const first = dir.stops[0];
             const last = dir.stops[dir.stops.length - 1];
-            const label = first && last
-              ? `${first.busStopName ?? first.busStopCode} → ${last.busStopName ?? last.busStopCode}`
-              : `Direction ${dir.direction}`;
+            const label =
+              first && last
+                ? `${first.busStopName ?? first.busStopCode} → ${last.busStopName ?? last.busStopCode}`
+                : `Direction ${dir.direction}`;
             const isActive = dir.direction === activeDirection;
 
             return (
@@ -167,4 +168,4 @@ export function ServiceRoutePage() {
       </footer>
     </div>
   );
-}
+};

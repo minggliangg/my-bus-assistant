@@ -1,14 +1,21 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useBusStopsStore } from "@/features/search-bar/stores";
+import { useTutorialStore } from "@/features/tutorial";
 import {
   clearAllCaches,
   getBusRoutesCount,
   getBusStopsCount,
   getLastUpdate,
 } from "@/lib/storage/bus-stops-db";
-import { useBusStopsStore } from "@/features/search-bar/stores";
-import { Link } from "@tanstack/react-router";
-import { ChevronLeft, Database, Loader2, Trash2 } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import {
+  ChevronLeft,
+  CircleHelp,
+  Database,
+  Loader2,
+  Trash2,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 interface CacheInfo {
@@ -17,9 +24,11 @@ interface CacheInfo {
   busRoutesCount: number;
 }
 
-export function SettingsPage() {
+export const SettingsPage = () => {
   const [cacheInfo, setCacheInfo] = useState<CacheInfo | null>(null);
   const [clearing, setClearing] = useState(false);
+  const navigate = useNavigate();
+  const startTutorial = useTutorialStore((state) => state.startTutorial);
 
   const loadCacheInfo = useCallback(async () => {
     const [lastUpdate, busStopsCount, busRoutesCount] = await Promise.all([
@@ -57,6 +66,11 @@ export function SettingsPage() {
     });
   };
 
+  const handleReplayTutorial = async () => {
+    await navigate({ to: "/", search: { busStop: undefined } });
+    startTutorial({ force: true });
+  };
+
   return (
     <div className="space-y-6">
       <header className="flex items-center gap-4">
@@ -80,16 +94,28 @@ export function SettingsPage() {
             {cacheInfo ? (
               <>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Last bus stops update</span>
-                  <span className="font-medium">{formatDate(cacheInfo.lastUpdate)}</span>
+                  <span className="text-muted-foreground">
+                    Last bus stops update
+                  </span>
+                  <span className="font-medium">
+                    {formatDate(cacheInfo.lastUpdate)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Cached bus stops</span>
-                  <span className="font-medium">{cacheInfo.busStopsCount.toLocaleString()}</span>
+                  <span className="text-muted-foreground">
+                    Cached bus stops
+                  </span>
+                  <span className="font-medium">
+                    {cacheInfo.busStopsCount.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Cached bus routes</span>
-                  <span className="font-medium">{cacheInfo.busRoutesCount.toLocaleString()}</span>
+                  <span className="text-muted-foreground">
+                    Cached bus routes
+                  </span>
+                  <span className="font-medium">
+                    {cacheInfo.busRoutesCount.toLocaleString()}
+                  </span>
                 </div>
               </>
             ) : (
@@ -102,12 +128,31 @@ export function SettingsPage() {
 
         <Card>
           <CardHeader>
+            <CardTitle className="text-lg">Tutorial</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Replay the Home walkthrough anytime to revisit icon controls.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => void handleReplayTutorial()}
+              className="w-full"
+            >
+              <CircleHelp className="h-4 w-4 mr-2" />
+              Replay tutorial
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle className="text-lg">Clear Cached Data</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Clears cached bus stops and routes. Your favorites will be preserved.
-              Fresh data will be fetched automatically.
+              Clears cached bus stops and routes. Your favorites will be
+              preserved. Fresh data will be fetched automatically.
             </p>
             <Button
               variant="destructive"
@@ -132,4 +177,4 @@ export function SettingsPage() {
       </div>
     </div>
   );
-}
+};

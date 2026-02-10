@@ -1,9 +1,12 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
 import { createMemoryHistory, RouterProvider, createRouter } from "@tanstack/react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import useThemeStore from "../features/theme/stores/useThemeStore";
 import useBusStopsStore from "../features/search-bar/stores/useBusStopsStore";
 import useFavoritesStore from "../features/favorites/stores/useFavoritesStore";
+import useTutorialStore from "../features/tutorial/stores/useTutorialStore";
+import { clearTutorialCompleted } from "../features/tutorial/lib/tutorial-storage";
 import { routeTree } from "../routeTree.gen";
 import * as busStopsDb from "@/lib/storage/bus-stops-db";
 import "fake-indexeddb/auto";
@@ -16,6 +19,12 @@ describe("Root Route", () => {
     useBusStopsStore.getState().reset();
     useThemeStore.setState({ theme: "system", effectiveTheme: "light" });
     useFavoritesStore.setState({ favorites: [], loading: true, error: null });
+    clearTutorialCompleted();
+    useTutorialStore.setState({
+      isOpen: false,
+      currentStepIndex: 0,
+      hasCompletedOnce: false,
+    });
 
     vi.stubEnv("VITE_BUS_STOPS_REFRESH_DAYS", "7");
 
@@ -117,6 +126,45 @@ describe("Root Route", () => {
       });
 
       getItemSpy.mockRestore();
+    });
+
+    it("auto-opens tutorial on first visit to /", async () => {
+      vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue([]);
+      vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(Date.now());
+      vi.spyOn(busStopsDb, "getAllFavorites").mockResolvedValue([]);
+
+      const history = createMemoryHistory({ initialEntries: ["/"] });
+      const router = createRouter({ routeTree, history });
+
+      render(<RouterProvider router={router} />);
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("dialog", { name: "Home tutorial" }),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("does not auto-open tutorial after completion", async () => {
+      useTutorialStore.getState().finishTutorial();
+      useTutorialStore.setState({ isOpen: false });
+
+      vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue([]);
+      vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(Date.now());
+      vi.spyOn(busStopsDb, "getAllFavorites").mockResolvedValue([]);
+
+      const history = createMemoryHistory({ initialEntries: ["/"] });
+      const router = createRouter({ routeTree, history });
+
+      render(<RouterProvider router={router} />);
+
+      await waitFor(() => {
+        expect(screen.getByText("My Bus Assistant")).toBeInTheDocument();
+      });
+
+      expect(
+        screen.queryByRole("dialog", { name: "Home tutorial" }),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -279,6 +327,88 @@ describe("Root Route", () => {
         const state = useFavoritesStore.getState();
         expect(state.error).toBe("DB Error");
         expect(state.loading).toBe(false);
+      });
+    });
+  });
+
+  describe("Tutorial replay and route guard", () => {
+    it("reopens from Home tutorial button after completion", async () => {
+      useTutorialStore.getState().finishTutorial();
+      useTutorialStore.setState({ isOpen: false });
+
+      vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue([]);
+      vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(Date.now());
+      vi.spyOn(busStopsDb, "getAllFavorites").mockResolvedValue([]);
+
+      const history = createMemoryHistory({ initialEntries: ["/"] });
+      const router = createRouter({ routeTree, history });
+
+      const user = userEvent.setup();
+      render(<RouterProvider router={router} />);
+
+      await user.click(
+        await screen.findByRole("button", { name: "Start tutorial" }),
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("dialog", { name: "Home tutorial" }),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("closes tutorial when navigating away from /", async () => {
+      vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue([]);
+      vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(Date.now());
+      vi.spyOn(busStopsDb, "getAllFavorites").mockResolvedValue([]);
+
+      const history = createMemoryHistory({ initialEntries: ["/"] });
+      const router = createRouter({ routeTree, history });
+
+      render(<RouterProvider router={router} />);
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("dialog", { name: "Home tutorial" }),
+        ).toBeInTheDocument();
+      });
+
+      await router.navigate({ to: "/about" });
+
+      await waitFor(() => {
+        expect(screen.getByText("About")).toBeInTheDocument();
+      });
+
+      expect(useTutorialStore.getState().isOpen).toBe(false);
+    });
+
+    it("reopens from Settings replay button", async () => {
+      useTutorialStore.getState().finishTutorial();
+      useTutorialStore.setState({ isOpen: false });
+
+      vi.spyOn(busStopsDb, "getAllBusStops").mockResolvedValue([]);
+      vi.spyOn(busStopsDb, "getLastUpdate").mockResolvedValue(Date.now());
+      vi.spyOn(busStopsDb, "getAllFavorites").mockResolvedValue([]);
+      vi.spyOn(busStopsDb, "getBusStopsCount").mockResolvedValue(0);
+      vi.spyOn(busStopsDb, "getBusRoutesCount").mockResolvedValue(0);
+
+      const history = createMemoryHistory({ initialEntries: ["/settings"] });
+      const router = createRouter({ routeTree, history });
+      const user = userEvent.setup();
+
+      render(<RouterProvider router={router} />);
+
+      await waitFor(() => {
+        expect(screen.getByText("Settings")).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole("button", { name: "Replay tutorial" }));
+
+      await waitFor(() => {
+        expect(screen.getByText("My Bus Assistant")).toBeInTheDocument();
+        expect(
+          screen.getByRole("dialog", { name: "Home tutorial" }),
+        ).toBeInTheDocument();
       });
     });
   });
