@@ -136,7 +136,7 @@ export const ServiceRoutePage = () => {
                 variant={isActive ? "default" : "ghost"}
                 size="sm"
                 className={cn(
-                  "flex-1 text-xs truncate h-auto py-1.5 px-2",
+                  "flex-1 h-auto px-2 py-1.5 text-xs leading-snug whitespace-normal break-words text-left",
                   !isActive && "text-muted-foreground",
                 )}
                 onClick={() => setActiveDirection(dir.direction)}
