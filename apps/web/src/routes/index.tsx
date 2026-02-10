@@ -62,9 +62,9 @@ const Home = () => {
 
   return (
     <div className="space-y-6">
-      <header className="relative">
-        <div className="flex items-start justify-center">
-          <div className="space-y-1.5 text-center">
+      <header>
+        <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-start">
+          <div className="space-y-1.5 text-center sm:col-start-2">
             <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               My Bus Assistant
             </h1>
@@ -72,9 +72,7 @@ const Home = () => {
               Real-time bus arrival information at your fingertips
             </p>
           </div>
-        </div>
-        <div className="absolute right-0 top-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2 sm:col-start-3 sm:row-start-1 sm:justify-self-end">
             <Button
               type="button"
               variant="outline"
@@ -123,14 +121,14 @@ const Home = () => {
 
       <footer className="pt-10 pb-6 text-center">
         <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-6" />
-        <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+        <div className="flex flex-col items-center justify-center gap-2 text-xs text-muted-foreground sm:flex-row sm:gap-4">
           <Link
             to="/about"
             className="hover:text-primary transition-colors hover:underline underline-offset-4"
           >
             About & Attribution
           </Link>
-          <span className="text-border">•</span>
+          <span className="hidden text-border sm:inline">•</span>
           <Link
             to="/settings"
             data-tour-id="settings-link"
@@ -138,7 +136,7 @@ const Home = () => {
           >
             Settings
           </Link>
-          <span className="text-border">•</span>
+          <span className="hidden text-border sm:inline">•</span>
           <a
             href="https://minggliangg.com"
             target="_blank"
