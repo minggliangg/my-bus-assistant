@@ -6,11 +6,13 @@ import { useFavoritesStore } from "../stores";
 interface FavoriteToggleButtonProps {
   busStopCode: string;
   className?: string;
+  "data-tour-id"?: string;
 }
 
 export const FavoriteToggleButton = ({
   busStopCode,
   className,
+  "data-tour-id": dataTourId,
 }: FavoriteToggleButtonProps) => {
   const { isFavorited, toggleFavorite } = useFavoritesStore();
   const favorited = isFavorited(busStopCode);
@@ -22,6 +24,7 @@ export const FavoriteToggleButton = ({
       className={cn("h-9 w-9", className)}
       onClick={() => void toggleFavorite(busStopCode)}
       aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+      data-tour-id={dataTourId}
     >
       <Star
         className={cn(

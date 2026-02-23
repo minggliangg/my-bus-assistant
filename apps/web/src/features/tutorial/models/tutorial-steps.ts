@@ -17,6 +17,13 @@ export const HOME_TUTORIAL_STEPS: TutorialStep[] = [
     placement: "bottom",
   },
   {
+    id: "favorite-stop",
+    selector: '[data-tour-id="favorite-stop"]',
+    title: "Save your favorites",
+    description: "Star a bus stop to add it to your favorites for quick access later.",
+    placement: "right",
+  },
+  {
     id: "manual-refresh",
     selector: '[data-tour-id="manual-refresh"]',
     title: "Refresh manually",

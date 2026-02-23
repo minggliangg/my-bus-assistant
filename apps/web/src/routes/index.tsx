@@ -12,7 +12,11 @@ import {
 import { BusStopSearchComboBox } from "@/features/search-bar";
 import { useBusStopsStore } from "@/features/search-bar/stores";
 import { ThemeToggle } from "@/features/theme";
-import { useTutorialStore } from "@/features/tutorial";
+import {
+  DemoBusStopCard,
+  HOME_TUTORIAL_STEPS,
+  useTutorialStore,
+} from "@/features/tutorial";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CircleHelp } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -22,7 +26,22 @@ const Home = () => {
   const { busStop } = Route.useSearch();
   const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const startTutorial = useTutorialStore((state) => state.startTutorial);
+  const { startTutorial, isOpen: isTutorialOpen, currentStepIndex } = useTutorialStore(
+    useShallow((state) => ({
+      startTutorial: state.startTutorial,
+      isOpen: state.isOpen,
+      currentStepIndex: state.currentStepIndex,
+    })),
+  );
+
+  // Check if we're on the "favorite-stop" tutorial step and no bus stop is selected
+  const favoriteStepIndex = HOME_TUTORIAL_STEPS.findIndex(
+    (step) => step.id === "favorite-stop",
+  );
+  const showDemoCard =
+    isTutorialOpen &&
+    currentStepIndex === favoriteStepIndex &&
+    !busStop;
 
   const handleBusStopSelect = (code: string | undefined) => {
     navigate({ to: "/", search: { busStop: code }, replace: true });
@@ -104,7 +123,7 @@ const Home = () => {
         onBusStopSelect={handleBusStopSelect}
       />
 
-      <BusStopArrivalCard busStopCode={busStop} />
+      {showDemoCard ? <DemoBusStopCard /> : <BusStopArrivalCard busStopCode={busStop} />}
 
       <NearestBusStopsDialog
         open={dialogOpen}
