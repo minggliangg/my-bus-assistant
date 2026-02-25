@@ -36,6 +36,29 @@ describe("useBusPreferencesStore", () => {
     expect(typeof prefs.updatedAt).toBe("number");
   });
 
+  it("overwrites existing preferences for a stop", async () => {
+    vi.spyOn(busStopsDb, "saveBusStopPreferences").mockResolvedValue();
+
+    useBusPreferencesStore.setState({
+      stopPreferences: {
+        "01012": {
+          busStopCode: "01012",
+          serviceOrder: ["14", "10"],
+          hiddenServices: ["14"],
+          updatedAt: 1000,
+        },
+      },
+    });
+
+    await useBusPreferencesStore
+      .getState()
+      .saveStopPreferences("01012", ["10", "14", "2"], []);
+
+    const prefs = useBusPreferencesStore.getState().stopPreferences["01012"];
+    expect(prefs.serviceOrder).toEqual(["10", "14", "2"]);
+    expect(prefs.hiddenServices).toEqual([]);
+  });
+
   it("sets error when saving stop preferences fails", async () => {
     vi.spyOn(busStopsDb, "saveBusStopPreferences").mockRejectedValue(new Error("DB fail"));
 

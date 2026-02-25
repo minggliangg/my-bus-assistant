@@ -19,12 +19,6 @@ interface BusPreferencesStore {
 
   loadAllPreferences: () => Promise<void>;
   loadBusStopPreferences: (busStopCode: string) => Promise<void>;
-  hideService: (busStopCode: string, serviceNo: string) => Promise<void>;
-  unhideService: (busStopCode: string, serviceNo: string) => Promise<void>;
-  reorderServices: (
-    busStopCode: string,
-    serviceOrder: string[]
-  ) => Promise<void>;
   saveStopPreferences: (
     busStopCode: string,
     serviceOrder: string[],
@@ -94,79 +88,6 @@ const useBusPreferencesStore = create<BusPreferencesStore>((set, get) => ({
             serviceOrder: null,
             updatedAt: 0,
           },
-        },
-      }));
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  },
-
-  hideService: async (busStopCode: string, serviceNo: string) => {
-    try {
-      const current = await getBusStopPreferences(busStopCode);
-      const prefs: BusStopServicePreferences = {
-        busStopCode,
-        hiddenServices: [
-          ...(current?.hiddenServices ?? []),
-          serviceNo,
-        ],
-        serviceOrder: current?.serviceOrder ?? null,
-        updatedAt: Date.now(),
-      };
-      await saveBusStopPreferences(prefs);
-      set((state) => ({
-        stopPreferences: {
-          ...state.stopPreferences,
-          [busStopCode]: prefs,
-        },
-      }));
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  },
-
-  unhideService: async (busStopCode: string, serviceNo: string) => {
-    try {
-      const current = await getBusStopPreferences(busStopCode);
-      if (!current) return;
-      const prefs: BusStopServicePreferences = {
-        busStopCode,
-        hiddenServices: current.hiddenServices.filter((s) => s !== serviceNo),
-        serviceOrder: current.serviceOrder,
-        updatedAt: Date.now(),
-      };
-      await saveBusStopPreferences(prefs);
-      set((state) => ({
-        stopPreferences: {
-          ...state.stopPreferences,
-          [busStopCode]: prefs,
-        },
-      }));
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  },
-
-  reorderServices: async (busStopCode: string, serviceOrder: string[]) => {
-    try {
-      const current = await getBusStopPreferences(busStopCode);
-      const prefs: BusStopServicePreferences = {
-        busStopCode,
-        hiddenServices: current?.hiddenServices ?? [],
-        serviceOrder,
-        updatedAt: Date.now(),
-      };
-      await saveBusStopPreferences(prefs);
-      set((state) => ({
-        stopPreferences: {
-          ...state.stopPreferences,
-          [busStopCode]: prefs,
         },
       }));
     } catch (error) {

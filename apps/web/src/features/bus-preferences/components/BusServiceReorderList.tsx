@@ -103,15 +103,15 @@ const ServiceReorderListInner = ({
     );
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const newOrder = items.map((i) => i.serviceNo);
     const newHidden = items.filter((i) => i.isHidden).map((i) => i.serviceNo);
-    saveStopPreferences(busStopCode, newOrder, newHidden);
+    await saveStopPreferences(busStopCode, newOrder, newHidden);
     onClose();
   };
 
-  const handleReset = () => {
-    resetServiceOrder(busStopCode);
+  const handleReset = async () => {
+    await resetServiceOrder(busStopCode);
     setItems(
       services.map((s) => ({ serviceNo: s.serviceNo, operator: s.operator, isHidden: false }))
     );
@@ -161,10 +161,11 @@ const ServiceReorderListInner = ({
                 <span className="text-muted-foreground">(Hidden)</span>
               )}
             </span>
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={() => toggleHidden(item.serviceNo, item.isHidden)}
               className={cn(
-                "p-1.5 rounded-md transition-colors",
                 item.isHidden
                   ? "text-muted-foreground hover:text-foreground"
                   : "text-primary hover:bg-primary/10"
@@ -176,7 +177,7 @@ const ServiceReorderListInner = ({
               ) : (
                 <Eye className="h-4 w-4" />
               )}
-            </button>
+            </Button>
           </div>
         ))}
       </div>
