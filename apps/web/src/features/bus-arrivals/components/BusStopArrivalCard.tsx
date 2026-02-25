@@ -12,16 +12,23 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { FavoriteToggleButton } from "@/features/favorites";
+import {
+  useBusPreferencesStore,
+  BusServiceReorderList,
+} from "@/features/bus-preferences";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeftRight,
   Bus,
+  Eye,
   Layers,
   Loader2,
   MapPin,
+  Pin,
+  PinOff,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { memo, useEffect, useState, type ReactNode } from "react";
+import { memo, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useShallow } from "zustand/react/shallow";
 import {
   formatArrivalTime,
@@ -61,8 +68,21 @@ export const BusStopArrivalCard = ({
       })),
     );
   const fetchBusArrivals = useBusStore((state) => state.fetchBusArrivals);
+  const { loadAllPreferences, getSortedServices, globalPriorities, stopPreferences } = useBusPreferencesStore(
+    useShallow((state) => ({
+      loadAllPreferences: state.loadAllPreferences,
+      getSortedServices: state.getSortedServices,
+      globalPriorities: state.globalPriorities,
+      stopPreferences: state.stopPreferences,
+    }))
+  );
 
   const [currentTime, setCurrentTime] = useState(Date.now);
+  const [reorderModalOpen, setReorderModalOpen] = useState(false);
+
+  useEffect(() => {
+    loadAllPreferences();
+  }, [loadAllPreferences]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -79,6 +99,14 @@ export const BusStopArrivalCard = ({
       fetchBusArrivals(busStopCode);
     }
   }, [busStopCode, fetchBusArrivals]);
+
+  // stopPreferences is needed as a dependency to trigger re-renders when preferences change
+  // (e.g., after saving service reorder), even though getSortedServices reads it internally
+  const sortedServices = useMemo(() => {
+    if (!busStop) return [];
+    return getSortedServices(busStop.busStopCode, busStop.services);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [busStop, getSortedServices, stopPreferences]);
 
   // Show empty state when no bus stop is selected
   if (!busStopCode) {
@@ -153,28 +181,33 @@ export const BusStopArrivalCard = ({
           </div>
           <div className="flex items-center gap-2">
             <FavoriteToggleButton busStopCode={busStop.busStopCode} />
-            <div className="flex h-9 items-center rounded-lg bg-primary/5 border border-primary/10 px-3">
-              <Bus className="h-4 w-4 text-primary/60 mr-2" />
+            <button
+              onClick={() => setReorderModalOpen(true)}
+              className="flex h-9 items-center rounded-lg bg-primary/5 border border-primary/10 px-3 hover:bg-primary/10 transition-colors"
+              title="Customize services"
+            >
+              <Eye className="h-4 w-4 text-primary/60 mr-2" />
               <span className="text-sm font-bold text-primary/80">
-                {busStop.services.length}
+                {sortedServices.length}/{busStop.services.length}
               </span>
-            </div>
+            </button>
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-3">
-        {busStop.services.length === 0 ? (
+        {sortedServices.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4 text-center">
             No services available
           </p>
         ) : (
-          busStop.services.map((service) => (
+          sortedServices.map((service) => (
             <BusServiceRow
               key={service.serviceNo}
               service={service}
               changedFields={changedFields}
               busStopCode={busStop.busStopCode}
+              isPriority={globalPriorities.prioritizedServices.includes(service.serviceNo)}
             />
           ))
         )}
@@ -197,6 +230,16 @@ export const BusStopArrivalCard = ({
           </div>
         </CardFooter>
       )}
+
+      <BusServiceReorderList
+        busStopCode={busStop.busStopCode}
+        services={busStop.services.map((s) => ({
+          serviceNo: s.serviceNo,
+          operator: s.operator,
+        }))}
+        open={reorderModalOpen}
+        onOpenChange={setReorderModalOpen}
+      />
     </Card>
   );
 };
@@ -205,6 +248,7 @@ type BusServiceRowProps = {
   service: BusService;
   changedFields: ChangedField[];
   busStopCode: string;
+  isPriority: boolean;
 };
 
 type ArrivalEntry = {
@@ -260,7 +304,13 @@ const ArrivalRow = ({
   );
 };
 
-const BusServiceRow = memo(({ service, changedFields, busStopCode }: BusServiceRowProps) => {
+const BusServiceRow = memo(({ service, changedFields, busStopCode, isPriority }: BusServiceRowProps) => {
+  const { addPriorityService, removePriorityService } = useBusPreferencesStore(
+    useShallow((state) => ({
+      addPriorityService: state.addPriorityService,
+      removePriorityService: state.removePriorityService,
+    }))
+  );
   const arrivalCandidates: ArrivalEntry[] = [service.nextBus, service.nextBus2, service.nextBus3]
     .map((arrival, index) => (arrival ? { arrival, index } : null))
     .filter((entry): entry is ArrivalEntry => Boolean(entry));
@@ -273,6 +323,14 @@ const BusServiceRow = memo(({ service, changedFields, busStopCode }: BusServiceR
   const secondaryArrivals = arrivalCandidates.slice(1);
   const hasRoute =
     primaryArrival?.arrival.originName || primaryArrival?.arrival.destinationName;
+
+  const handleTogglePriority = () => {
+    if (isPriority) {
+      removePriorityService(service.serviceNo);
+    } else {
+      addPriorityService(service.serviceNo);
+    }
+  };
 
   return (
     <div
@@ -310,17 +368,36 @@ const BusServiceRow = memo(({ service, changedFields, busStopCode }: BusServiceR
             </span>
           )}
         </div>
-        {hasChanges && (
-          <div
-            className="flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 dark:bg-green-900/30 sm:ml-auto"
-            data-testid={`service-updated-${service.serviceNo}`}
+        <div className="flex items-center gap-2">
+          {hasChanges && (
+            <div
+              className="flex shrink-0 items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 dark:bg-green-900/30"
+              data-testid={`service-updated-${service.serviceNo}`}
+            >
+              <div className="h-1.5 w-1.5 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-[10px] text-green-700 dark:text-green-400 font-medium">
+                Updated
+              </span>
+            </div>
+          )}
+          <button
+            onClick={handleTogglePriority}
+            className={cn(
+              "shrink-0 p-1.5 rounded-md transition-colors",
+              isPriority
+                ? "text-primary bg-primary/10 hover:bg-primary/20"
+                : "text-muted-foreground hover:text-primary hover:bg-muted"
+            )}
+            title={isPriority ? "Remove from priority" : "Pin to top"}
+            aria-label={isPriority ? `Unpin ${service.serviceNo}` : `Pin ${service.serviceNo}`}
           >
-            <div className="h-1.5 w-1.5 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-[10px] text-green-700 dark:text-green-400 font-medium">
-              Updated
-            </span>
-          </div>
-        )}
+            {isPriority ? (
+              <PinOff className="h-4 w-4" />
+            ) : (
+              <Pin className="h-4 w-4" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Arrival rows - each row has time + badges together */}

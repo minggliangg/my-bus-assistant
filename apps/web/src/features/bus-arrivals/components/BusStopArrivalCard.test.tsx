@@ -88,7 +88,7 @@ describe("BusStopCard", () => {
       renderWithProviders(<BusStopArrivalCard busStopCode="83138" />);
 
       await waitFor(() => {
-        expect(screen.getByText("1")).toBeInTheDocument();
+        expect(screen.getByText("1/1")).toBeInTheDocument();
       });
     });
 
@@ -96,7 +96,7 @@ describe("BusStopCard", () => {
       renderWithProviders(<BusStopArrivalCard busStopCode="83139" />);
 
       await waitFor(() => {
-        expect(screen.getByText("2")).toBeInTheDocument();
+        expect(screen.getByText("2/2")).toBeInTheDocument();
       });
     });
 

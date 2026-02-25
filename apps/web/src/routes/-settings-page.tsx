@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PriorityServiceManager } from "@/features/bus-preferences";
 import { useBusStopsStore } from "@/features/search-bar/stores";
 import { useTutorialStore } from "@/features/tutorial";
 import {
@@ -83,6 +84,8 @@ export const SettingsPage = () => {
       </header>
 
       <div className="space-y-4">
+        <PriorityServiceManager />
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
