@@ -25,6 +25,11 @@ interface BusPreferencesStore {
     busStopCode: string,
     serviceOrder: string[]
   ) => Promise<void>;
+  saveStopPreferences: (
+    busStopCode: string,
+    serviceOrder: string[],
+    hiddenServices: string[]
+  ) => Promise<void>;
   resetServiceOrder: (busStopCode: string) => Promise<void>;
 
   loadGlobalPriorities: () => Promise<void>;
@@ -168,6 +173,23 @@ const useBusPreferencesStore = create<BusPreferencesStore>((set, get) => ({
       set({
         error: error instanceof Error ? error.message : "Unknown error",
       });
+    }
+  },
+
+  saveStopPreferences: async (busStopCode, serviceOrder, hiddenServices) => {
+    try {
+      const prefs: BusStopServicePreferences = {
+        busStopCode,
+        serviceOrder,
+        hiddenServices,
+        updatedAt: Date.now(),
+      };
+      await saveBusStopPreferences(prefs);
+      set((state) => ({
+        stopPreferences: { ...state.stopPreferences, [busStopCode]: prefs },
+      }));
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : "Unknown error" });
     }
   },
 

@@ -10,8 +10,8 @@ import {
 import { useBusPreferencesStore } from "@/features/bus-preferences";
 import { getOperatorBadgeColors } from "@/features/bus-arrivals/utils";
 import { cn } from "@/lib/utils";
-import { Eye, EyeOff, GripVertical, RotateCcw } from "lucide-react";
-import { useState, useRef, useMemo, useEffect } from "react";
+import { ChevronDown, ChevronUp, Eye, EyeOff, RotateCcw } from "lucide-react";
+import { useState, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 interface BusServiceReorderListProps {
@@ -36,13 +36,11 @@ const ServiceReorderListInner = ({
   services: { serviceNo: string; operator: string }[];
   onClose: () => void;
 }) => {
-  const { stopPreferences, reorderServices, hideService, unhideService, resetServiceOrder } =
+  const { stopPreferences, saveStopPreferences, resetServiceOrder } =
     useBusPreferencesStore(
       useShallow((state) => ({
         stopPreferences: state.stopPreferences,
-        reorderServices: state.reorderServices,
-        hideService: state.hideService,
-        unhideService: state.unhideService,
+        saveStopPreferences: state.saveStopPreferences,
         resetServiceOrder: state.resetServiceOrder,
       }))
     );
@@ -88,155 +86,68 @@ const ServiceReorderListInner = ({
   }, [services, prefs]);
 
   const [items, setItems] = useState<ServiceItem[]>(initialItems);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [touchDragIndex, setTouchDragIndex] = useState<number | null>(null);
-  const dragNodeRef = useRef<HTMLDivElement | null>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-  const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
-  // Sync items when initialItems changes (e.g., after reset)
-  useEffect(() => {
-    setItems(initialItems);
-  }, [initialItems]);
-
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedIndex(index);
-    dragNodeRef.current = e.target as HTMLDivElement;
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === index) return;
-    setDragOverIndex(index);
-  };
-
-  const handleDragLeave = () => {
-    setDragOverIndex(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === dropIndex) {
-      setDraggedIndex(null);
-      setDragOverIndex(null);
-      return;
-    }
-
+  const moveItem = (index: number, direction: "up" | "down") => {
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= items.length) return;
     const newItems = [...items];
-    const [draggedItem] = newItems.splice(draggedIndex, 1);
-    newItems.splice(dropIndex, 0, draggedItem);
+    [newItems[index], newItems[swapIndex]] = [newItems[swapIndex], newItems[index]];
     setItems(newItems);
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-  };
-
-  // Touch event handlers for mobile drag support
-  const handleTouchStart = (e: React.TouchEvent, index: number) => {
-    setTouchDragIndex(index);
-    dragNodeRef.current = e.currentTarget as HTMLDivElement;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (touchDragIndex === null || !listRef.current) return;
-
-    const touch = e.touches[0];
-
-    // Calculate which item we're hovering over
-    const listRect = listRef.current.getBoundingClientRect();
-    const relativeY = touch.clientY - listRect.top;
-
-    let newHoverIndex = 0;
-    let accumulatedHeight = 0;
-
-    for (let i = 0; i < items.length; i++) {
-      const itemEl = itemRefs.current.get(items[i].serviceNo);
-      if (itemEl) {
-        const itemHeight = itemEl.offsetHeight;
-        accumulatedHeight += itemHeight;
-        if (relativeY < accumulatedHeight) {
-          newHoverIndex = i;
-          break;
-        }
-        newHoverIndex = i;
-      }
-    }
-
-    if (newHoverIndex !== dragOverIndex && newHoverIndex !== touchDragIndex) {
-      setDragOverIndex(newHoverIndex);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (touchDragIndex !== null && dragOverIndex !== null && touchDragIndex !== dragOverIndex) {
-      const newItems = [...items];
-      const [draggedItem] = newItems.splice(touchDragIndex, 1);
-      newItems.splice(dragOverIndex, 0, draggedItem);
-      setItems(newItems);
-    }
-
-    setTouchDragIndex(null);
-    setDragOverIndex(null);
-    dragNodeRef.current = null;
   };
 
   const toggleHidden = (serviceNo: string, currentlyHidden: boolean) => {
-    if (currentlyHidden) {
-      unhideService(busStopCode, serviceNo);
-    } else {
-      hideService(busStopCode, serviceNo);
-    }
     setItems((prev) =>
       prev.map((item) =>
-        item.serviceNo === serviceNo
-          ? { ...item, isHidden: !currentlyHidden }
-          : item
+        item.serviceNo === serviceNo ? { ...item, isHidden: !currentlyHidden } : item
       )
     );
   };
 
   const handleSave = () => {
     const newOrder = items.map((i) => i.serviceNo);
-    reorderServices(busStopCode, newOrder);
+    const newHidden = items.filter((i) => i.isHidden).map((i) => i.serviceNo);
+    saveStopPreferences(busStopCode, newOrder, newHidden);
     onClose();
   };
 
   const handleReset = () => {
     resetServiceOrder(busStopCode);
+    setItems(
+      services.map((s) => ({ serviceNo: s.serviceNo, operator: s.operator, isHidden: false }))
+    );
   };
 
   return (
     <>
-      <div ref={listRef} className="space-y-2 max-h-[60vh] overflow-y-auto py-2">
+      <div className="space-y-2 max-h-[60vh] overflow-y-auto py-2">
         {items.map((item, index) => (
           <div
             key={item.serviceNo}
-            ref={(el) => {
-              if (el) itemRefs.current.set(item.serviceNo, el);
-            }}
-            draggable
-            onDragStart={(e) => handleDragStart(e, index)}
-            onDragOver={(e) => handleDragOver(e, index)}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, index)}
-            onDragEnd={handleDragEnd}
-            onTouchStart={(e) => handleTouchStart(e, index)}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
             className={cn(
-              "flex items-center gap-2 p-2 rounded-lg border transition-all cursor-grab active:cursor-grabbing select-none",
-              item.isHidden && "opacity-50 bg-muted",
-              (draggedIndex === index || touchDragIndex === index) && "opacity-50 scale-95",
-              dragOverIndex === index && "border-primary border-2"
+              "flex items-center gap-2 p-2 rounded-lg border transition-all",
+              item.isHidden && "opacity-50 bg-muted"
             )}
           >
-            <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+            <div className="flex flex-col shrink-0">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => moveItem(index, "up")}
+                disabled={index === 0}
+                title="Move up"
+              >
+                <ChevronUp className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => moveItem(index, "down")}
+                disabled={index === items.length - 1}
+                title="Move down"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </div>
             <span
               className={cn(
                 "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
@@ -309,7 +220,7 @@ export const BusServiceReorderList = ({
         <DialogHeader>
           <DialogTitle>Customize Services</DialogTitle>
           <DialogDescription>
-            Drag to reorder, tap the eye icon to hide services at this stop.
+            Use the arrows to reorder, tap the eye icon to hide services at this stop.
           </DialogDescription>
         </DialogHeader>
 

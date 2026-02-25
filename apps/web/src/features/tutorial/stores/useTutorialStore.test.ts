@@ -4,6 +4,7 @@ import {
   clearTutorialCompleted,
   markTutorialCompleted,
 } from "../lib/tutorial-storage";
+import { HOME_TUTORIAL_STEPS } from "../models/tutorial-steps";
 import useTutorialStore from "./useTutorialStore";
 
 const resetStore = () => {
@@ -73,12 +74,9 @@ describe("useTutorialStore", () => {
     expect(result.current.currentStepIndex).toBe(0);
 
     act(() => {
-      result.current.nextStep();
-      result.current.nextStep();
-      result.current.nextStep();
-      result.current.nextStep();
-      result.current.nextStep();
-      result.current.nextStep();
+      for (let i = 0; i < HOME_TUTORIAL_STEPS.length; i += 1) {
+        result.current.nextStep();
+      }
     });
 
     expect(result.current.isOpen).toBe(false);

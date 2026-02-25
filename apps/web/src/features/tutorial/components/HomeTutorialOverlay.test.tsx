@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { clearTutorialCompleted } from "../lib/tutorial-storage";
+import { HOME_TUTORIAL_STEPS } from "../models/tutorial-steps";
 import useTutorialStore from "../stores/useTutorialStore";
 import { HomeTutorialOverlay } from "./HomeTutorialOverlay";
 
@@ -17,6 +18,7 @@ const renderWithTargets = () => {
   render(
     <>
       <button data-tour-id="search-bus-stop">search</button>
+      <button data-tour-id="favorite-stop">favorite</button>
       <button data-tour-id="manual-refresh">manual</button>
       <button data-tour-id="auto-refresh">auto</button>
       <button data-tour-id="nearby-stops">nearby</button>
@@ -39,7 +41,7 @@ describe("HomeTutorialOverlay", () => {
     useTutorialStore.getState().startTutorial({ force: true });
 
     expect(await screen.findByText("Search for a bus stop")).toBeInTheDocument();
-    expect(screen.getByText("Step 1 of 6")).toBeInTheDocument();
+    expect(screen.getByText(`Step 1 of ${HOME_TUTORIAL_STEPS.length}`)).toBeInTheDocument();
   });
 
   it("moves step on Next and Back", async () => {
@@ -49,7 +51,7 @@ describe("HomeTutorialOverlay", () => {
     useTutorialStore.getState().startTutorial({ force: true });
 
     await user.click(await screen.findByRole("button", { name: "Next" }));
-    expect(await screen.findByText("Refresh manually")).toBeInTheDocument();
+    expect(await screen.findByText("Save your favorites")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Back" }));
     expect(await screen.findByText("Search for a bus stop")).toBeInTheDocument();
