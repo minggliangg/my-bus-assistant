@@ -12,6 +12,10 @@ import { isIngesting } from "./lib/db/ingestion/scheduler";
 import { getMetadata } from "./lib/db/repositories/metadata.repository";
 import { getBusStopsCount } from "./lib/db/repositories/bus-stops.repository";
 import { getBusRoutesCount } from "./lib/db/repositories/bus-routes.repository";
+import { analytics } from "./routes/analytics";
+import { requestMetrics } from "./lib/analytics/request-metrics";
+import { pruneAnalytics } from "./lib/analytics/analytics.repository";
+import { createDashboardApp } from "./dashboard/dashboard-app";
 
 const app = new Hono();
 const ALLOWED_ORIGINS = new Set(
@@ -41,12 +45,14 @@ app.use(
     },
   }),
 );
+app.use("/api/*", requestMetrics());
 app.use("/api/*", compress());
 
 // Routes - matching the LTA DataMall API paths
 app.route("/api/ltaodataservice/v3/BusArrival", busArrival);
 app.route("/api/ltaodataservice/BusStops", busStops);
 app.route("/api/ltaodataservice/BusRoutes", busRoutes);
+app.route("/api/analytics", analytics);
 
 const getReadiness = () => {
   const busStopsLastUpdated = getMetadata("bus_stops_last_updated");
@@ -161,10 +167,54 @@ app.onError((err, c) => {
 });
 
 const port = parseInt(process.env.PORT || "3001", 10);
+// Loopback by default: public traffic arrives via Caddy on 127.0.0.1.
+// Set HOST=0.0.0.0 only if something else must reach the API directly.
+const hostname = process.env.HOST || "127.0.0.1";
 
-console.log(`🚌 Bus Assistant API starting on port ${port}`);
+// Analytics retention: prune old rows at startup and daily.
+const ANALYTICS_RETENTION_DAYS = parseInt(
+  process.env.ANALYTICS_RETENTION_DAYS || "180",
+  10,
+);
+const runAnalyticsPrune = () => {
+  try {
+    const removed = pruneAnalytics(ANALYTICS_RETENTION_DAYS);
+    if (removed > 0) {
+      console.info(JSON.stringify({ event: "analytics_pruned", removed }));
+    }
+  } catch (error) {
+    console.error("Analytics prune failed:", error);
+  }
+};
+
+// Private dashboard: localhost only, exposed to the tailnet via `tailscale serve`.
+// Never routed through Caddy / Cloudflare. Not started under `bun test`.
+if (process.env.NODE_ENV !== "test") {
+  runAnalyticsPrune();
+  setInterval(runAnalyticsPrune, 24 * 60 * 60 * 1000).unref();
+
+  if (process.env.DASHBOARD_ENABLED !== "false") {
+    const dashboardPort = parseInt(process.env.DASHBOARD_PORT || "3010", 10);
+    try {
+      Bun.serve({
+        hostname: "127.0.0.1",
+        port: dashboardPort,
+        fetch: createDashboardApp().fetch,
+      });
+      console.log(
+        `📊 Analytics dashboard on http://127.0.0.1:${dashboardPort} (tailnet via tailscale serve)`,
+      );
+    } catch (error) {
+      // e.g. port already taken by another instance (dev vs prod on one host)
+      console.warn(`Analytics dashboard not started on port ${dashboardPort}:`, error);
+    }
+  }
+}
+
+console.log(`🚌 Bus Assistant API starting on http://${hostname}:${port}`);
 
 export default {
+  hostname,
   port,
   fetch: app.fetch,
 };

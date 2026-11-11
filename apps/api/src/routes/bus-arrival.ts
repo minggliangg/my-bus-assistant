@@ -66,11 +66,13 @@ busArrival.get("/", async (c) => {
     console.info(
       JSON.stringify({ event: "bus_arrival_cache_hit", busStopCode, ip }),
     );
+    c.header("X-Cache", "HIT");
     return c.json(cached.data);
   }
   console.info(
     JSON.stringify({ event: "bus_arrival_cache_miss", busStopCode, ip }),
   );
+  c.header("X-Cache", "MISS");
 
   try {
     const data = await fetchFromLTA<BusArrivalDTO>(

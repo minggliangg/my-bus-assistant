@@ -19,7 +19,9 @@ import {
 } from "@/features/tutorial";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CircleHelp } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { StopViewSource } from "@my-bus-assistant/shared";
+import { analytics } from "@/lib/analytics";
 import { useShallow } from "zustand/react/shallow";
 
 const Home = () => {
@@ -43,14 +45,25 @@ const Home = () => {
     currentStepIndex === favoriteStepIndex &&
     !busStop;
 
-  const handleBusStopSelect = (code: string | undefined) => {
+  const handleBusStopSelect = (
+    code: string | undefined,
+    source?: StopViewSource,
+  ) => {
+    if (code && source && code !== busStop) analytics.stopViewed(code, source);
     navigate({ to: "/", search: { busStop: code }, replace: true });
   };
+
+  // A stop already in the URL on first load came from a shared link or reload.
+  useEffect(() => {
+    if (busStop) analytics.stopViewed(busStop, "link");
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only on mount
+  }, []);
 
   const handleNearbyDialogOpen = (open: boolean) => {
     setDialogOpen(open);
 
     if (open) {
+      analytics.nearbyOpened();
       const busStops = useBusStopsStore.getState().busStops;
       const { requestLocation, findNearestStops } = useNearbyStore.getState();
 
@@ -110,7 +123,7 @@ const Home = () => {
       <div className="flex gap-2 items-start rounded-xl bg-card border p-2 shadow-sm">
         <div className="flex-1 min-w-0">
           <BusStopSearchComboBox
-            onBusStopSelect={handleBusStopSelect}
+            onBusStopSelect={(code) => handleBusStopSelect(code, "search")}
             defaultValue={busStop}
           />
         </div>
@@ -120,7 +133,7 @@ const Home = () => {
 
       <FavoriteBusStops
         selectedBusStopCode={busStop}
-        onBusStopSelect={handleBusStopSelect}
+        onBusStopSelect={(code) => handleBusStopSelect(code, "favorite")}
       />
 
       {showDemoCard ? <DemoBusStopCard /> : <BusStopArrivalCard busStopCode={busStop} />}
@@ -133,7 +146,7 @@ const Home = () => {
         error={locationError}
         userLocation={userLocation}
         onBusStopSelect={(code) => {
-          handleBusStopSelect(code);
+          handleBusStopSelect(code, "nearby");
         }}
         onRetry={retry}
       />

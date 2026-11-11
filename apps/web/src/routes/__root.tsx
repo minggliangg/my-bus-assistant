@@ -6,6 +6,7 @@ import { useBusStopsStore } from "@/features/search-bar/stores";
 import { useThemeStore } from "@/features/theme";
 import { UpdateBanner } from "@/features/service-worker";
 import { HomeTutorialOverlay, useTutorialStore } from "@/features/tutorial";
+import { analytics } from "@/lib/analytics";
 
 const RootComponent = () => {
   const pathname = useRouterState({
@@ -19,6 +20,10 @@ const RootComponent = () => {
 
     return cleanupTheme;
   }, []);
+
+  useEffect(() => {
+    analytics.pageView(pathname);
+  }, [pathname]);
 
   useEffect(() => {
     if (pathname === "/" && !useTutorialStore.getState().hasCompletedOnce) {

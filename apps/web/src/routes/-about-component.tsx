@@ -60,6 +60,31 @@ const About = () => {
 
         <Card>
           <CardHeader>
+            <CardTitle className="text-lg">Privacy</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground leading-relaxed">
+            <p>
+              Your favorites, preferences and location stay on your device.
+              Location is only used in your browser to find nearby stops and is
+              never sent to the server.
+            </p>
+            <p>
+              To improve the app, anonymous usage statistics are collected:
+              which pages and bus stops are viewed, how stops are found
+              (search, favorites, nearby), and favorites added or removed. They
+              are linked to a random ID stored on your device, not to you, and
+              contain no name, account, IP address or location. Statistics are
+              kept for 180 days and are never shared or sold.
+            </p>
+            <p>
+              To opt out, turn on Do Not Track or Global Privacy Control in
+              your browser.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle className="text-lg">Data Attribution</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-xs text-muted-foreground leading-relaxed">

@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { create } from "zustand";
 import {
   addFavorite,
@@ -41,6 +42,7 @@ const useFavoritesStore = create<FavoritesStore>((set, get) => ({
     set({ error: null });
     try {
       await addFavorite(busStopCode);
+      analytics.favoriteAdded(busStopCode);
       const favorites = await getAllFavorites();
       set({ favorites, error: null });
     } catch (error) {
@@ -54,6 +56,7 @@ const useFavoritesStore = create<FavoritesStore>((set, get) => ({
     set({ error: null });
     try {
       await removeFavorite(busStopCode);
+      analytics.favoriteRemoved(busStopCode);
       const favorites = await getAllFavorites();
       set({ favorites, error: null });
     } catch (error) {

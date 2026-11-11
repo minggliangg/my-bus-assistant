@@ -5,3 +5,4 @@
 export * from "./types/bus-arrival";
 export * from "./types/bus-stops";
 export * from "./types/bus-routes";
+export * from "./types/analytics";

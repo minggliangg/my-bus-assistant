@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { ArrowLeft, Loader2, Route as RouteIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { analytics } from "@/lib/analytics";
 import { useShallow } from "zustand/react/shallow";
 
 export const ServiceRoutePage = () => {
@@ -28,6 +29,10 @@ export const ServiceRoutePage = () => {
   useEffect(() => {
     fetchRoute(serviceNo);
   }, [serviceNo, fetchRoute]);
+
+  useEffect(() => {
+    analytics.serviceRouteViewed(serviceNo);
+  }, [serviceNo]);
 
   // Find which direction contains the fromStop, default to 1
   const initialDirection = useMemo(() => {
