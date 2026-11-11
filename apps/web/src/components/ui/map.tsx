@@ -12,32 +12,12 @@ interface MapProps {
   selectedStopCode?: string;
 }
 
-// CartoDB basemap style configuration with theme support
-const createMapStyle = (isDark: boolean) => ({
-  version: 8 as const,
-  sources: {
-    "carto-tiles": {
-      type: "raster" as const,
-      tiles: [
-        isDark
-          ? "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          : "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-      ],
-      tileSize: 256,
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    },
-  },
-  layers: [
-    {
-      id: "carto-tiles",
-      type: "raster" as const,
-      source: "carto-tiles",
-      minzoom: 0,
-      maxzoom: 24,
-    },
-  ],
-});
+// OpenFreeMap styles (free, no API key). CARTO's public basemap tiles now
+// require an API key and return "API KEY REQUIRED" placeholder tiles.
+const createMapStyle = (isDark: boolean) =>
+  isDark
+    ? "https://tiles.openfreemap.org/styles/dark"
+    : "https://tiles.openfreemap.org/styles/positron";
 
 export const Map = ({
   className,
